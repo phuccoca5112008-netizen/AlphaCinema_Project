@@ -1,0 +1,92 @@
+using AlphaCinema.Core.DTOs.KhuyenMai;
+using AlphaCinema.Core.Interfaces;
+using AlphaCinema.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace AlphaCinema.Services.Services;
+
+public class KhuyenMaiService : IKhuyenMaiService
+{
+    private readonly AlphaCinemaDbContext _context;
+
+    public KhuyenMaiService(AlphaCinemaDbContext context) => _context = context;
+
+    private KhuyenMaiResponse ToResponse(Core.Entities.KhuyenMai k) => new()
+    {
+        MaKhuyenMai = k.MaKhuyenMai, TenKhuyenMai = k.TenKhuyenMai,
+        MaCodeGiamGia = k.MaCodeGiamGia, MoTa = k.MoTa,
+        NgayBatDau = k.NgayBatDau, NgayKetThuc = k.NgayKetThuc,
+        LoaiGiamGia = k.LoaiGiamGia, GiaTriGiam = k.GiaTriGiam,
+        GiamToiDa = k.GiamToiDa, DonHangToiThieu = k.DonHangToiThieu,
+        ConHieuLuc = k.NgayBatDau <= DateTime.Now && k.NgayKetThuc >= DateTime.Now
+    };
+
+    public async Task<IEnumerable<KhuyenMaiResponse>> GetAllAsync()
+        => (await _context.KhuyenMais.ToListAsync()).Select(ToResponse);
+
+    public async Task<KhuyenMaiResponse?> GetByIdAsync(int id)
+    {
+        var k = await _context.KhuyenMais.FindAsync(id);
+        return k == null ? null : ToResponse(k);
+    }
+
+    public async Task<ApDungKhuyenMaiResponse> ApDungMaGiamAsync(ApDungKhuyenMaiRequest request)
+    {
+        var km = await _context.KhuyenMais.FirstOrDefaultAsync(k =>
+            k.MaCodeGiamGia == request.MaCode &&
+            k.NgayBatDau <= DateTime.Now && k.NgayKetThuc >= DateTime.Now)
+            ?? throw new Exception("Mã giảm giá không hợp lệ hoặc đã hết hạn.");
+
+        if (km.DonHangToiThieu.HasValue && request.TongTienGoc < km.DonHangToiThieu)
+            throw new Exception($"Đơn hàng tối thiểu {km.DonHangToiThieu:N0}đ để áp dụng mã này.");
+
+        var tienGiam = km.LoaiGiamGia == "PhanTram"
+            ? request.TongTienGoc * km.GiaTriGiam / 100
+            : km.GiaTriGiam;
+
+        if (km.GiamToiDa.HasValue && tienGiam > km.GiamToiDa)
+            tienGiam = km.GiamToiDa.Value;
+
+        return new ApDungKhuyenMaiResponse
+        {
+            TienGiam = tienGiam,
+            TongTienSauGiam = request.TongTienGoc - tienGiam,
+            TenKhuyenMai = km.TenKhuyenMai
+        };
+    }
+
+    public async Task<KhuyenMaiResponse> CreateAsync(CreateKhuyenMaiRequest request)
+    {
+        if (await _context.KhuyenMais.AnyAsync(k => k.MaCodeGiamGia == request.MaCodeGiamGia))
+            throw new Exception("Mã code đã tồn tại.");
+
+        var km = new Core.Entities.KhuyenMai
+        {
+            TenKhuyenMai = request.TenKhuyenMai, MaCodeGiamGia = request.MaCodeGiamGia,
+            MoTa = request.MoTa, NgayBatDau = request.NgayBatDau, NgayKetThuc = request.NgayKetThuc,
+            LoaiGiamGia = request.LoaiGiamGia, GiaTriGiam = request.GiaTriGiam,
+            GiamToiDa = request.GiamToiDa, DonHangToiThieu = request.DonHangToiThieu
+        };
+        _context.KhuyenMais.Add(km);
+        await _context.SaveChangesAsync();
+        return ToResponse(km);
+    }
+
+    public async Task<KhuyenMaiResponse> UpdateAsync(int id, CreateKhuyenMaiRequest request)
+    {
+        var km = await _context.KhuyenMais.FindAsync(id) ?? throw new Exception("Khuyến mãi không tồn tại.");
+        km.TenKhuyenMai = request.TenKhuyenMai; km.MoTa = request.MoTa;
+        km.NgayBatDau = request.NgayBatDau; km.NgayKetThuc = request.NgayKetThuc;
+        km.LoaiGiamGia = request.LoaiGiamGia; km.GiaTriGiam = request.GiaTriGiam;
+        km.GiamToiDa = request.GiamToiDa; km.DonHangToiThieu = request.DonHangToiThieu;
+        await _context.SaveChangesAsync();
+        return ToResponse(km);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var km = await _context.KhuyenMais.FindAsync(id) ?? throw new Exception("Khuyến mãi không tồn tại.");
+        _context.KhuyenMais.Remove(km);
+        await _context.SaveChangesAsync();
+    }
+}

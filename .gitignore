@@ -1,0 +1,33 @@
+# Build & Result Folders
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Environment & Secrets
+.env
+.env.*.local
+appsettings.json
+appsettings.Development.json
+*.db
+*.sqlite
+
+# IDE - Visual Studio
+.vs/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS related files
+.DS_Store
+Thumbs.db
