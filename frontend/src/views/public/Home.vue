@@ -120,27 +120,21 @@
     <!-- ═══ PROMO STRIP ═══ -->
     <section class="promo-section container mt-5 mb-5">
       <div class="promo-grid">
-        <div class="promo-card" style="background-image:url(https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?w=800&q=80)">
+        <router-link to="/promotions" v-for="promo in homePromos" :key="promo.id" 
+          class="promo-card" :style="{ backgroundImage: `url(${promo.image})` }">
           <div class="promo-overlay">
-            <span class="badge badge-orange mb-2">ƯU ĐÃI HOT</span>
-            <h3>Thứ 3 Vui Vẻ</h3>
-            <p>Chỉ 50.000đ mọi suất chiếu</p>
+            <span class="badge mb-2" 
+              :class="{ 
+                'badge-gold': promo.type === 'member', 
+                'badge-orange': promo.type === 'ticket',
+                'badge-red': promo.type === 'payment'
+              }">
+              {{ promo.tag.toUpperCase() }}
+            </span>
+            <h3>{{ promo.title }}</h3>
+            <p>{{ promo.description }}</p>
           </div>
-        </div>
-        <div class="promo-card" style="background-image:url(https://images.unsplash.com/photo-1534802046520-4f27db7f3ae5?w=800&q=80)">
-          <div class="promo-overlay">
-            <span class="badge badge-red mb-2">STUDENT DEAL</span>
-            <h3>Học Sinh – Sinh Viên</h3>
-            <p>Giảm ngay 20% khi xuất trình thẻ</p>
-          </div>
-        </div>
-        <div class="promo-card" style="background-image:url(https://images.unsplash.com/photo-1485095329183-d0797bf1a2b1?w=800&q=80)">
-          <div class="promo-overlay">
-            <span class="badge badge-gold mb-2">VIP MEMBER</span>
-            <h3>Thành Viên Vip</h3>
-            <p>Tích điểm, đổi vé miễn phí</p>
-          </div>
-        </div>
+        </router-link>
       </div>
     </section>
 
@@ -151,8 +145,20 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../../api/axios';
+import { promotions as promoData } from '../../data/promotions';
 
 const router = useRouter();
+
+const getImageUrl = (name) => {
+  return new URL(`../../assets/promotions/${name}`, import.meta.url).href;
+};
+
+const homePromos = computed(() => {
+  return promoData.slice(0, 3).map(p => ({
+    ...p,
+    image: getImageUrl(p.imageName)
+  }));
+});
 
 // ─── Slider data ───────────────────────────────────────────
 const slides = ref([
@@ -454,8 +460,25 @@ const goBook = () => {
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: 1.5rem;
 }
-.promo-overlay h3 { font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0.3rem 0; }
-.promo-overlay p  { font-size: 0.9rem; color: rgba(255,255,255,0.75); }
+.promo-overlay h3 { 
+  font-size: 1.2rem; 
+  font-weight: 800; 
+  color: #fff; 
+  margin: 0.3rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.promo-overlay p  { 
+  font-size: 0.85rem; 
+  color: rgba(255,255,255,0.75);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
 .mb-2 { margin-bottom: 0.5rem; }
 .mt-5 { margin-top: 3rem; }
 .mb-5 { margin-bottom: 3rem; }

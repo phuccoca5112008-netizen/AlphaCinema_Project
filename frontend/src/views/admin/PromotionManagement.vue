@@ -2,12 +2,12 @@
   <div class="promotion-management">
     <div class="header-section mb-5">
       <div class="header-info">
-        <h1 class="gradient-text title-large">Quản Lý Khuyến Mãi</h1>
-        <p class="text-muted">Tạo và điều chỉnh các chương trình ưu đãi cho khách hàng</p>
+        <h1 class="gradient-text title-large">Quản Lý Bài Đăng & Ưu Đãi</h1>
+        <p class="text-muted">Đăng tải và điều chỉnh nội dung hiển thị tại khu vực "Khuyến Mãi & Ưu Đãi"</p>
       </div>
       <button class="btn-create-premium" @click="openForm()">
-        <span class="icon-plus">+</span>
-        <span>THÊM MÃ MỚI</span>
+        <span class="icon-plus">✨</span>
+        <span>ĐĂNG BÀI ƯU ĐÃI MỚI</span>
       </button>
     </div>
 
@@ -31,6 +31,7 @@
     <div v-else class="promo-grid">
       <div v-for="km in promotions" :key="km.maKhuyenMai" class="promo-card glass-panel-heavy" :class="{ 'expired': !km.conHieuLuc }">
         <div class="promo-card-header">
+          <div class="promo-category-badge" v-if="km.phanLoai">{{ km.phanLoai }}</div>
           <div class="promo-badge" :class="km.conHieuLuc ? 'active' : 'expired'">
             {{ km.conHieuLuc ? 'ĐANG CHẠY' : 'HẾT HẠN' }}
           </div>
@@ -38,6 +39,10 @@
             <button class="action-btn edit" @click="openForm(km)"><i class="fas fa-edit"></i></button>
             <button class="action-btn delete" @click="deletePromotion(km.maKhuyenMai)"><i class="fas fa-trash-alt"></i></button>
           </div>
+        </div>
+
+        <div class="promo-poster-mini" v-if="km.hinhAnh">
+          <img :src="km.hinhAnh" alt="Promo Poster" />
         </div>
 
         <div class="promo-card-body">
@@ -88,20 +93,30 @@
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-box glass-panel-heavy animate-pop">
         <div class="modal-top">
-          <h2>{{ isEdit ? 'Chỉnh Sửa Mã' : 'Tạo Mã Khuyến Mãi' }}</h2>
+          <h2>{{ isEdit ? 'Chỉnh Sửa Ưu Đãi' : 'Tạo Ưu Đãi Mới' }}</h2>
           <button @click="showModal = false" class="close-modal">×</button>
         </div>
         
         <form @submit.prevent="savePromotion" class="modern-form">
           <div class="form-grid">
             <div class="field full">
-              <label>Tên Chương Trình</label>
-              <input type="text" v-model="form.tenKhuyenMai" placeholder="VD: Khai trương Alpha Cinema" required />
+              <label>Tên Chương Trình Ưu Đãi</label>
+              <input type="text" v-model="form.tenKhuyenMai" placeholder="VD: Thứ 3 Vui Vẻ - Đồng giá 50k" required />
+            </div>
+
+            <div class="field">
+              <label>Phân Loại (Badge)</label>
+              <input type="text" v-model="form.phanLoai" placeholder="VD: ƯU ĐÃI HOT, STUDENT DEAL..." />
+            </div>
+
+            <div class="field">
+              <label>Link Hình Ảnh (Poster)</label>
+              <input type="text" v-model="form.hinhAnh" placeholder="Hệ thống sẽ lấy ảnh từ link này..." />
             </div>
             
             <div class="field">
               <label>Mã Code (Coupon)</label>
-              <input type="text" v-model="form.maCodeGiamGia" placeholder="VD: ALPHA100" required />
+              <input type="text" v-model="form.maCodeGiamGia" placeholder="VD: ALPHA50K" required />
             </div>
 
             <div class="field">
@@ -133,15 +148,15 @@
             </div>
 
             <div class="field full">
-              <label>Mô Tả</label>
-              <textarea v-model="form.moTa" rows="2" placeholder="Nhập mô tả ngắn gọn..."></textarea>
+              <label>Nội Dung Chi Tiết Ưu Đãi</label>
+              <textarea v-model="form.moTa" rows="4" placeholder="Nhập nội dung hiển thị khi khách hàng nhấn Xem Thêm..."></textarea>
             </div>
           </div>
 
           <div class="modal-actions">
             <button type="button" class="btn-cancel" @click="showModal = false">HUỶ BỎ</button>
             <button type="submit" class="btn-save-gold">
-               {{ isEdit ? 'CẬP NHẬT NGAY' : 'TẠO MÃ GIẢM GIÁ' }}
+                {{ isEdit ? 'CẬP NHẬT ƯU ĐÃI' : 'ĐĂNG ƯU ĐÃI NGAY' }}
             </button>
           </div>
         </form>
@@ -192,7 +207,9 @@ const openForm = (km = null) => {
       loaiGiamGia: 'PhanTram',
       giaTriGiam: 0,
       giamToiDa: null,
-      donHangToiThieu: 0
+      donHangToiThieu: 0,
+      hinhAnh: '',
+      phanLoai: ''
     };
   }
   showModal.value = true;
@@ -313,7 +330,39 @@ onMounted(() => {
 .promo-badge.active { background: rgba(0,230,118,0.1); color: #00e676; }
 .promo-badge.expired { background: rgba(255,51,102,0.1); color: #ff3366; }
 
-.promo-actions { display: flex; gap: 0.6rem; }
+.promo-category-badge {
+  position: absolute;
+  top: 1.5rem;
+  left: 2rem;
+  background: var(--color-primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  z-index: 10;
+}
+
+.promo-poster-mini {
+  width: calc(100% + 4rem);
+  margin: -2rem -2rem 1.5rem -2rem;
+  height: 180px;
+  overflow: hidden;
+}
+
+.promo-poster-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: 0.5s;
+}
+
+.promo-card:hover .promo-poster-mini img {
+  transform: scale(1.1);
+}
+
+.promo-actions { display: flex; gap: 0.6rem; position: relative; z-index: 20; }
 .action-btn {
   width: 32px; height: 32px; border-radius: 8px;
   background: rgba(255,255,255,0.05); border: none;

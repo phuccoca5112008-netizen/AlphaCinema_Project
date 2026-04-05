@@ -31,3 +31,9 @@ appsettings.Development.json
 # OS related files
 .DS_Store
 Thumbs.db
+
+# Project-specific temporary folders
+.gemini/
+tmp/
+_tmp/
+tools/

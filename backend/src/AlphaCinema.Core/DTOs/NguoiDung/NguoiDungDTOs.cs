@@ -7,6 +7,7 @@ public class NguoiDungResponse
     public string HoTen { get; set; } = string.Empty;
     public string VaiTro { get; set; } = string.Empty;
     public int DiemTichLuy { get; set; }
+    public string HangThanhVien { get; set; } = "Bạc";
 }
 
 public class UpdateNguoiDungRequest

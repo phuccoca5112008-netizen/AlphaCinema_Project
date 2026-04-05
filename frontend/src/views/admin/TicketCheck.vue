@@ -21,9 +21,23 @@
               @keyup.enter="handleCheck"
               ref="codeInput"
             />
+            
+            <button @click="toggleScanner" class="btn btn-qr" :class="{ 'is-active': isScanning }" title="Quét mã QR">
+              <i class="fas fa-qrcode"></i>
+            </button>
+
             <button @click="handleCheck" class="btn btn-primary check-btn" :disabled="loading">
               <span v-if="loading" class="loader"></span>
               <span v-else>XÁC THỰC</span>
+            </button>
+          </div>
+
+          <!-- Scanner Container -->
+          <div v-if="isScanning" class="scanner-container animate-fade-in">
+            <div id="qr-reader"></div>
+            <p class="scanner-hint">Đưa mã QR vào khung quét</p>
+            <button @click="stopScanner" class="btn-close-scanner">
+              <i class="fas fa-times"></i> Đóng Camera
             </button>
           </div>
         </div>
@@ -41,7 +55,16 @@
                 <div class="movie-section">
                   <h3 class="movie-title">{{ result.tenPhim }}</h3>
                   <div class="status-indicator" :class="statusClass">
-                    <span class="dot"></span> {{ result.trangThai }}
+                    <span class="dot"></span> {{ result.daCheckIn ? 'ĐÃ CHECK-IN' : result.trangThai }}
+                  </div>
+                </div>
+
+                <!-- NEW: Customer Info -->
+                <div class="customer-info-box mb-4 animate-in-delay-1" v-if="result.tenNguoiDung">
+                  <div class="avatar-mini">{{ result.tenNguoiDung.charAt(0) }}</div>
+                  <div class="user-text">
+                    <span class="label">KHÁCH HÀNG</span>
+                    <span class="value">{{ result.tenNguoiDung }}</span>
                   </div>
                 </div>
 
@@ -62,6 +85,15 @@
                     <span class="label">GHẾ</span>
                     <span class="valueHighlight seat">{{ result.viTriGhe }}</span>
                   </div>
+                </div>
+
+                <!-- NEW: Concessions Section -->
+                <div class="concessions-alert p-3 mb-4 animate-in-delay-2" v-if="result.danhSachDoAn">
+                  <div class="c-header">
+                    <i class="fas fa-popcorn-icon">🍿</i>
+                    <span class="label">DỊCH VỤ ĐI KÈM</span>
+                  </div>
+                  <div class="c-list">{{ result.danhSachDoAn }}</div>
                 </div>
 
                 <div class="ticket-footer-info">
@@ -121,15 +153,20 @@
           <div v-if="checkHistory.length === 0" class="empty-history">
             Chưa có lượt kiểm vé nào
           </div>
-          <div v-for="(h, i) in checkHistory" :key="i" class="history-item animate-slide-in">
+          <div 
+            v-for="(h, i) in checkHistory" 
+            :key="i" 
+            class="history-item animate-slide-in clickable"
+            @click="reselectHistory(h)"
+          >
             <div class="hi-time">{{ formatTime(h.checkedAt) }}</div>
             <div class="hi-info">
-              <div class="hi-movie">{{ h.tenPhim }}</div>
-              <div class="hi-seats">Ghế: {{ h.viTriGhe }}</div>
+              <div class="hi-movie">{{ h.ticket.tenPhim }}</div>
+              <div class="hi-seats">Ghế: {{ h.ticket.viTriGhe }}</div>
             </div>
             <div class="hi-status">
-              <span class="badge" :class="h.type === 'HÓA ĐƠN' ? 'bg-bill' : 'bg-ticket'">
-                {{ h.type }}
+              <span class="badge" :class="h.ticket.loaiGhe === 'HÓA ĐƠN' ? 'bg-bill' : 'bg-ticket'">
+                {{ h.ticket.loaiGhe === 'HÓA ĐƠN' ? 'HÓA ĐƠN' : 'VÉ' }}
               </span>
             </div>
           </div>
@@ -140,8 +177,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import api from '../../api/axios';
+import { Html5Qrcode } from "html5-qrcode";
 
 const ticketCode = ref('');
 const loading = ref(false);
@@ -151,11 +189,64 @@ const success = ref(false);
 const errorMsg = ref('');
 const codeInput = ref(null);
 
+// QR Scanner state
+const isScanning = ref(false);
+let html5QrCode = null;
+const scannerId = "qr-reader";
+
+const startScanner = async () => {
+  isScanning.value = true;
+  result.value = null; // Clear previous result when starting fresh scan
+  
+  setTimeout(async () => {
+    try {
+      html5QrCode = new Html5Qrcode(scannerId);
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
+      await html5QrCode.start(
+        { facingMode: "user" }, // Use front camera on computers
+        config,
+        async (decodedText) => {
+          ticketCode.value = decodedText;
+          await stopScanner();
+          handleCheck(); // Auto verify after scan
+        },
+        (errorMessage) => {
+          // ignore scan errors (they happen every frame if no QR is visible)
+        }
+      );
+    } catch (err) {
+      console.error("Unable to start scanner:", err);
+      errorMsg.value = "Không thể truy cập Camera. Vui lòng kiểm tra quyền trình duyệt.";
+      isScanning.value = false;
+    }
+  }, 300);
+};
+
+const stopScanner = async () => {
+  if (html5QrCode && html5QrCode.isScanning) {
+    try {
+      await html5QrCode.stop();
+      html5QrCode = null;
+    } catch (err) {
+      console.error("Failed to stop scanner:", err);
+    }
+  }
+  isScanning.value = false;
+};
+
+const toggleScanner = () => {
+  if (isScanning.value) stopScanner();
+  else startScanner();
+};
+
 const statusClass = computed(() => {
   if (!result.value) return '';
+  if (result.value.daCheckIn) return 'status-invalid'; // Already used before
+  
   switch (result.value.trangThai) {
     case 'Đã thanh toán': return 'status-valid';
-    case 'Đã sử dụng': return 'status-invalid';
+    case 'Đã sử dụng': return 'status-valid'; // Just check-in now
     case 'Đã hủy': return 'status-cancelled';
     default: return '';
   }
@@ -173,14 +264,24 @@ const formatTime = (date) => {
 };
 
 const checkHistory = ref([]);
-const addToHistory = (ticket) => {
+const addToHistory = (ticket, msg, isSuccess) => {
+  // Tránh trùng lặp trong lịch sử hiển thị
+  checkHistory.value = checkHistory.value.filter(h => h.ticket.maVaoCong !== ticket.maVaoCong);
+
   checkHistory.value.unshift({
-    tenPhim: ticket.tenPhim,
-    viTriGhe: ticket.viTriGhe,
-    type: ticket.loaiGhe === 'HÓA ĐƠN' ? 'HÓA ĐƠN' : 'VÉ LẺ',
+    ticket: { ...ticket },
+    message: msg,
+    success: isSuccess,
     checkedAt: new Date()
   });
-  if (checkHistory.value.length > 10) checkHistory.value.pop();
+  if (checkHistory.value.length > 15) checkHistory.value.pop();
+};
+
+const reselectHistory = (historyItem) => {
+  result.value = historyItem.ticket;
+  message.value = historyItem.message;
+  success.value = historyItem.success;
+  ticketCode.value = historyItem.ticket.maVaoCong || historyItem.ticket.maVe.toString();
 };
 
 const handleCheck = async () => {
@@ -197,8 +298,9 @@ const handleCheck = async () => {
     if (res.success) {
       result.value = res.data;
       message.value = res.message;
-      success.value = true;
-      addToHistory(res.data);
+      success.value = !res.data.daCheckIn; 
+      
+      addToHistory(res.data, res.message, success.value);
     }
   } catch (err) {
     errorMsg.value = err.message || 'Mã vé không hợp lệ hoặc lỗi kết nối.';
@@ -221,6 +323,10 @@ const printTicket = () => {
 
 onMounted(() => {
   codeInput.value?.focus();
+});
+
+onBeforeUnmount(() => {
+  stopScanner();
 });
 </script>
 
@@ -315,12 +421,92 @@ onMounted(() => {
   letter-spacing: 2px;
 }
 
+.btn-qr {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-qr:hover {
+  background: rgba(232, 136, 42, 0.1);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.btn-qr.is-active {
+  background: var(--color-primary);
+  color: white;
+  animation: qr-pulse 1.5s infinite;
+}
+
+@keyframes qr-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(232, 136, 42, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(232, 136, 42, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 136, 42, 0); }
+}
+
 .check-btn {
   padding: 1rem 2.5rem;
   border-radius: 16px;
   font-weight: 800;
   letter-spacing: 1px;
   box-shadow: 0 8px 20px rgba(232, 136, 42, 0.3);
+}
+
+.scanner-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#qr-reader {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 0 20px rgba(232, 136, 42, 0.2);
+}
+
+/* Custom styling for internal html5-qrcode elements if needed */
+#qr-reader video {
+  border-radius: 12px;
+}
+
+.scanner-hint {
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.btn-close-scanner {
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-close-scanner:hover {
+  background: var(--color-secondary);
 }
 
 /* Ticket Design */
@@ -466,6 +652,84 @@ onMounted(() => {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   color: var(--color-primary);
+}
+
+/* NEW: Staff Info Styles */
+.customer-info-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.avatar-mini {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-text .label {
+  font-size: 0.6rem;
+  color: var(--color-text-muted);
+  letter-spacing: 1.5px;
+  font-weight: 800;
+}
+
+.user-text .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: white;
+}
+
+.concessions-alert {
+  background: rgba(232, 136, 42, 0.08);
+  border: 1px solid rgba(232, 136, 42, 0.2);
+  border-radius: 16px;
+}
+
+.c-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.c-header .label {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  letter-spacing: 1px;
+}
+
+.c-list {
+  font-size: 1rem;
+  color: #ff9f43;
+  font-weight: 700;
+  padding-left: 1.8rem;
+}
+
+.animate-in-delay-1 { animation: slideInUp 0.5s both; animation-delay: 0.1s; }
+.animate-in-delay-2 { animation: slideInUp 0.5s both; animation-delay: 0.2s; }
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .ticket-id {
@@ -639,6 +903,18 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.history-item.clickable {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.history-item.clickable:hover {
+  background: rgba(232, 136, 42, 0.1);
+  border-color: var(--color-primary);
+  transform: translateX(-5px);
+  box-shadow: -5px 0 15px rgba(232, 136, 42, 0.1);
 }
 
 .hi-time {

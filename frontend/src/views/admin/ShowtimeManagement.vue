@@ -1,219 +1,510 @@
 <template>
   <div class="showtime-management">
-    <div class="header-row mb-4">
-      <h1 class="gradient-text m-0">Quản Lý Suất Chiếu</h1>
-      <button class="btn btn-primary" @click="openModal()">+ Thêm Suất Chiếu</button>
+    <div class="header-actions">
+      <div>
+        <h1 class="gradient-text"><i class="fas fa-clock"></i> Quản Lý Suất Chiếu</h1>
+        <p class="text-muted">Lập lịch và điều hành hoạt động rạp phim Alpha Cinema.</p>
+      </div>
+      <button class="btn btn-primary shadow-lg" @click="handleOpenModal()">
+        <i class="fas fa-plus"></i> Thêm Suất Chiếu
+      </button>
     </div>
 
-    <!-- Filter phim -->
-    <div class="glass-panel filter-box mb-4">
-      <label class="form-label" style="display:inline-block; margin-right: 1rem;">Lọc theo phim:</label>
-      <select v-model="filterPhim" class="form-input" style="width: 300px; display:inline-block;" @change="fetchShowtimes">
-        <option value="">-- Tất cả phim --</option>
-        <option v-for="p in phims" :key="p.maPhim" :value="p.maPhim">{{ p.tenPhim }}</option>
-      </select>
-    </div>
-
-    <!-- Danh sách suất chiếu -->
-    <div class="glass-panel table-container">
-      <div v-if="loading" class="p-4 text-muted">Đang tải danh sách...</div>
-      <table class="data-table" v-else>
-        <thead>
-          <tr>
-            <th>Phim</th>
-            <th>Phòng / Định Dạng</th>
-            <th>Thời Gian Bắt Đầu</th>
-            <th>Giá Gốc (VNĐ)</th>
-            <th class="text-right">Hành Động</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="s in showtimes" :key="s.maSuatChieu">
-            <td><strong>{{ s.tenPhim }}</strong></td>
-            <td>Phòng {{ s.tenPhong }} - {{ s.dinhDang }}</td>
-            <td class="text-accent">{{ new Date(s.thoiGianBatDau).toLocaleString() }}</td>
-            <td class="text-success">{{ s.giaVeGoc.toLocaleString() }}đ</td>
-            <td class="text-right">
-              <button class="btn btn-outline btn-sm action-btn text-error border-error" @click="deleteShowtime(s.maSuatChieu)">Xóa</button>
-            </td>
-          </tr>
-          <tr v-if="showtimes.length === 0">
-            <td colspan="5" class="text-center text-muted p-4">Không có suất chiếu nào.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Modal Form (Create Only for simplicity here, updating showtime usually involves more rules) -->
-    <div class="modal-backdrop" v-if="showModal">
-      <div class="modal-content glass-panel">
-        <h3>Thêm Suất Chiếu Mới</h3>
-        
-        <form @submit.prevent="saveShowtime" class="mt-4">
-          <div class="form-group row">
-            <div class="col">
-              <label class="form-label">Chọn phim</label>
-              <select v-model="formData.maPhim" class="form-input" required>
-                <option v-for="p in phims" :key="p.maPhim" :value="p.maPhim">{{ p.tenPhim }}</option>
-              </select>
-            </div>
-            <div class="col">
-              <label class="form-label">Phòng chiếu (1-5)</label>
-              <input type="number" v-model="formData.maPhong" class="form-input" required min="1" max="5">
-              <small class="text-muted">Database seed sẵn Phòng 1 đến 5.</small>
-            </div>
+    <!-- Filter Bar - Premium Glassmorphism -->
+    <div class="glass-panel filter-toolbar mb-4">
+      <div class="filter-group date-filters">
+        <label class="form-label mb-2"><i class="far fa-calendar-alt"></i> Chọn ngày chiếu:</label>
+        <div class="date-chips">
+          <button 
+            v-for="d in dateShortcuts" :key="d.date"
+            class="chip" :class="{ active: selectedDate === d.date }"
+            @click="selectDate(d.date)"
+          >
+            <span class="day-name">{{ d.dayLabel }}</span>
+            <span class="day-num">{{ d.numLabel }}</span>
+          </button>
+          <div class="date-picker-wrap">
+            <input type="date" v-model="selectedDate" class="form-input date-input" @change="fetchShowtimes">
           </div>
-          
-          <div class="form-group row">
-            <div class="col">
-              <label class="form-label">Thời gian bắt đầu</label>
-              <input type="datetime-local" v-model="formData.thoiGianBatDau" class="form-input" required>
-            </div>
-            <div class="col">
-              <label class="form-label">Giá vé gốc</label>
-              <input type="number" v-model="formData.giaVeGoc" class="form-input" required min="0" step="5000">
-            </div>
-          </div>
+        </div>
+      </div>
 
-          <div class="form-group">
-            <label class="form-label">Định dạng</label>
-            <select v-model="formData.dinhDang" class="form-input">
-              <option value="2D">2D Tiêu Chuẩn</option>
-              <option value="3D">3D Cao Cấp</option>
-              <option value="IMAX">IMAX Hiện Đại</option>
-            </select>
-          </div>
+      <div class="divider"></div>
 
-          <div class="modal-actions">
-            <button type="button" class="btn btn-outline" @click="showModal = false">Hủy</button>
-            <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? 'Đang lưu...' : 'Lưu' }}</button>
-          </div>
-        </form>
+      <div class="filter-group select-filters">
+        <div class="select-item">
+          <label class="form-label mb-2"><i class="fas fa-door-open"></i> Phòng:</label>
+          <select v-model="filterRoom" class="form-input" @change="fetchShowtimes">
+            <option value="">Tất cả phòng</option>
+            <option v-for="r in rooms" :key="r.maPhong" :value="r.maPhong">{{ r.tenPhong }}</option>
+          </select>
+        </div>
+        <div class="select-item">
+          <label class="form-label mb-2"><i class="fas fa-film"></i> Phim:</label>
+          <select v-model="filterPhim" class="form-input" @change="fetchShowtimes">
+            <option value="">Tất cả phim</option>
+            <option v-for="p in phims" :key="p.maPhim" :value="p.maPhim">{{ p.tenPhim }}</option>
+          </select>
+        </div>
       </div>
     </div>
+
+    <!-- Board Content -->
+    <div class="content-body" v-if="!loading">
+      <div v-if="filteredGroups.length > 0" class="room-grid">
+        <div v-for="room in filteredGroups" :key="room.maPhong" class="room-column animate-in">
+          <div class="room-header glass-panel">
+            <div class="room-title">
+              <span class="indicator"></span>
+              <h3>{{ room.tenPhong }}</h3>
+            </div>
+            <span class="count-badge">{{ room.items.length }} suất</span>
+          </div>
+
+          <div class="showtime-cards">
+            <div v-for="s in room.items" :key="s.maSuatChieu" class="st-card glass-panel" :class="getStatusClass(s)">
+              <div class="st-status-bar"></div>
+              
+              <div class="st-main">
+                <div class="st-time">
+                  <div class="start-time">{{ formatTime(s.thoiGianBatDau) }}</div>
+                  <div class="duration text-muted">{{ s.dinhDang }}</div>
+                </div>
+                
+                <div class="st-info">
+                  <h4 class="movie-title" :title="s.tenPhim">{{ s.tenPhim }}</h4>
+                  <div class="price-info">{{ (s.giaVeGoc || 0).toLocaleString() }}đ</div>
+                </div>
+
+                <div class="st-occupancy">
+                  <div class="occ-text">
+                    <span><i class="fas fa-users"></i> {{ calculateOccupancy(s) }}%</span>
+                    <span class="empty-seats">{{ s.soGheTrong }} trống</span>
+                  </div>
+                  <div class="occ-progress">
+                    <div class="occ-fill" :style="{ width: calculateOccupancy(s) + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="st-actions">
+                <button class="action-btn edit-btn" @click.stop="handleOpenModal(s)" title="Chỉnh sửa">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="action-btn delete-btn" @click.stop="deleteShowtime(s.maSuatChieu)" title="Xóa">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div v-else class="empty-state glass-panel">
+        <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+        <h3>Không tìm thấy lịch chiếu</h3>
+        <p>Thử thay đổi ngày xem hoặc chỉnh lại bộ lọc phòng/phim.</p>
+        <button class="btn btn-outline mt-3" @click="clearFilters">Cài lại bộ lọc</button>
+      </div>
+    </div>
+
+    <!-- Loading screen -->
+    <div v-else class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Đang chuẩn bị lịch chiếu...</p>
+    </div>
+
+    <!-- Modal Form (Create/Edit) -->
+    <teleport to="body">
+      <transition name="modal-fade">
+        <div class="modal-root" v-if="showModal" @click.self="showModal = false">
+          <div class="modal-dialog glass-panel animate-modal">
+            <div class="modal-header">
+              <h2 class="gradient-text">
+                <i class="fas" :class="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+                {{ isEdit ? 'Cập Nhật Suất Chiếu' : 'Tạo Suất Chiếu Mới' }}
+              </h2>
+              <button class="close-btn" @click="showModal = false">&times;</button>
+            </div>
+            
+            <form @submit.prevent="saveShowtime" class="modal-body">
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label class="form-label">Phim</label>
+                  <select v-model="formData.maPhim" class="form-input" required>
+                    <option value="" disabled>Chọn phim...</option>
+                    <option v-for="p in phims" :key="p.maPhim" :value="p.maPhim">{{ p.tenPhim }}</option>
+                  </select>
+                </div>
+                <div class="form-group flex-1">
+                  <label class="form-label">Phòng</label>
+                  <select v-model="formData.maPhong" class="form-input" required>
+                    <option value="" disabled>Chọn phòng...</option>
+                    <option v-for="r in rooms" :key="r.maPhong" :value="r.maPhong">{{ r.tenPhong }}</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-row mt-4">
+                <div class="form-group flex-1">
+                  <label class="form-label">Thời Gian & Ngày Chiếu</label>
+                  <input type="datetime-local" v-model="formData.thoiGianBatDau" class="form-input" required>
+                </div>
+                <div class="form-group" style="width: 140px;">
+                  <label class="form-label">Định Dạng</label>
+                  <select v-model="formData.dinhDang" class="form-input">
+                    <option value="2D">2D</option>
+                    <option value="3D">3D</option>
+                    <option value="IMAX">IMAX</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-row mt-4">
+                <div class="form-group flex-1">
+                  <label class="form-label">Giá Vé (VNĐ)</label>
+                  <div class="price-input-group">
+                    <input type="number" v-model="formData.giaVeGoc" class="form-input" required min="10000" step="1000">
+                    <span class="unit-text">đ</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert-box mt-4" v-if="isEdit">
+                <i class="fas fa-info-circle"></i>
+                Lưu ý: Thay đổi thông tin sẽ áp dụng ngay cho các giao dịch mới.
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline" @click="showModal = false">Bỏ qua</button>
+                <button type="submit" class="btn btn-primary" :disabled="saving">
+                  <i class="fas fa-check-circle" v-if="!saving"></i>
+                  {{ saving ? 'Đang thực hiện...' : (isEdit ? 'Lưu Kết Quả' : 'Tạo Suất Chiếu') }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '../../api/axios';
 
+// --- UTILS ---
+const padStr = (n) => (n < 10 ? '0' + n : n);
+const toISOStringForInput = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const YYYY = d.getFullYear();
+  const MM = padStr(d.getMonth() + 1);
+  const DD = padStr(d.getDate());
+  const hh = padStr(d.getHours());
+  const mm = padStr(d.getMinutes());
+  return `${YYYY}-${MM}-${DD}T${hh}:${mm}`;
+};
+
+// --- STATE ---
 const showtimes = ref([]);
 const phims = ref([]);
-const filterPhim = ref('');
+const rooms = ref([]);
 const loading = ref(true);
+const saving = ref(false);
+
+const filterPhim = ref('');
+const filterRoom = ref('');
+const selectedDate = ref(new Date().toISOString().split('T')[0]);
 
 const showModal = ref(false);
-const saving = ref(false);
+const isEdit = ref(false);
 const formData = ref({});
 
+// --- LIFE CYCLE ---
 onMounted(async () => {
-  await fetchPhims();
-  await fetchShowtimes();
+  try {
+    await Promise.all([fetchPhims(), fetchRooms(), fetchShowtimes()]);
+  } catch (e) {
+    console.error('App init failed:', e);
+  } finally {
+    loading.value = false;
+  }
 });
 
-const fetchPhims = async () => {
-  try {
-    const res = await api.get('/phim');
-    if (res.success) phims.value = res.data;
-  } catch (error) { console.error(error); }
+// --- API ACTIONS ---
+async function fetchPhims() {
+  const res = await api.get('/phim');
+  if (res.success) phims.value = res.data;
 }
 
-const fetchShowtimes = async () => {
+async function fetchRooms() {
+  const res = await api.get('/phong-chieu');
+  if (res.success) rooms.value = res.data;
+}
+
+async function fetchShowtimes() {
   loading.value = true;
   try {
-    const url = filterPhim.value ? `/suat-chieu?maPhim=${filterPhim.value}` : '/suat-chieu';
-    const res = await api.get(url);
+    const params = new URLSearchParams();
+    if (filterPhim.value) params.append('maPhim', filterPhim.value);
+    if (selectedDate.value) params.append('ngay', selectedDate.value);
+    
+    const res = await api.get(`/suat-chieu?${params.toString()}`);
     if (res.success) showtimes.value = res.data;
-  } catch (error) {
-    console.error(error);
   } finally {
     loading.value = false;
   }
 }
 
-const openModal = () => {
-  // ISO string yyyy-MM-ddThh:mm for datetime-local
-  const defaultDate = new Date();
-  defaultDate.setDate(defaultDate.getDate() + 1); // Tomorrow
-  defaultDate.setHours(19, 0, 0, 0); // 19:00
-  // Pad function for datetime string
-  const pad = (n) => (n < 10 ? '0' + n : n);
-  const dateString = `${defaultDate.getFullYear()}-${pad(defaultDate.getMonth()+1)}-${pad(defaultDate.getDate())}T${pad(defaultDate.getHours())}:${pad(defaultDate.getMinutes())}`;
+// --- LOGIC ---
+const dateShortcuts = computed(() => {
+  const out = [];
+  const start = new Date();
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const iso = d.toISOString().split('T')[0];
+    out.push({
+      date: iso,
+      dayLabel: i === 0 ? 'Nay' : d.toLocaleDateString('vi-VN', { weekday: 'short' }),
+      numLabel: `${d.getDate()}/${d.getMonth() + 1}`
+    });
+  }
+  return out;
+});
 
-  formData.value = { 
-    maPhim: phims.value.length > 0 ? phims.value[0].maPhim : 1, 
-    maPhong: 1, 
-    thoiGianBatDau: dateString, 
-    giaVeGoc: 80000, 
-    dinhDang: '2D' 
-  };
+const selectDate = (date) => {
+  selectedDate.value = date;
+  fetchShowtimes();
+};
+
+const clearFilters = () => {
+  filterPhim.value = '';
+  filterRoom.value = '';
+  selectedDate.value = new Date().toISOString().split('T')[0];
+  fetchShowtimes();
+};
+
+const filteredGroups = computed(() => {
+  const list = [...showtimes.value];
+  if (filterRoom.value) {
+    // Single room filter
+    const matched = list.filter(s => s.maPhong == filterRoom.value);
+    const r = rooms.value.find(rm => rm.maPhong == filterRoom.value);
+    return [{
+      maPhong: filterRoom.value,
+      tenPhong: r ? r.tenPhong : 'Phòng Đã Chọn',
+      items: matched.sort((a,b) => new Date(a.thoiGianBatDau) - new Date(b.thoiGianBatDau))
+    }];
+  }
+
+  // All rooms with content
+  const groups = {};
+  rooms.value.forEach(r => {
+    const matched = list.filter(s => s.maPhong === r.maPhong);
+    if (matched.length > 0) {
+      groups[r.maPhong] = {
+        maPhong: r.maPhong,
+        tenPhong: r.tenPhong,
+        items: matched.sort((a,b) => new Date(a.thoiGianBatDau) - new Date(b.thoiGianBatDau))
+      };
+    }
+  });
+  return Object.values(groups).sort((a,b) => (a.tenPhong || '').localeCompare(b.tenPhong || ''));
+});
+
+// --- MODAL & ACTIONS ---
+const handleOpenModal = (item = null) => {
+  if (item) {
+    isEdit.value = true;
+    formData.value = {
+      maSuatChieu: item.maSuatChieu,
+      maPhim: item.maPhim,
+      maPhong: item.maPhong,
+      thoiGianBatDau: toISOStringForInput(item.thoiGianBatDau),
+      giaVeGoc: item.giaVeGoc,
+      dinhDang: item.dinhDang
+    };
+  } else {
+    isEdit.value = false;
+    const nextHour = new Date();
+    nextHour.setDate(nextHour.getDate() + 1);
+    nextHour.setHours(19, 0, 0, 0);
+
+    formData.value = { 
+      maPhim: phims.value.length > 0 ? phims.value[0].maPhim : '', 
+      maPhong: rooms.value.length > 0 ? rooms.value[0].maPhong : '', 
+      thoiGianBatDau: toISOStringForInput(nextHour), 
+      giaVeGoc: 80000, 
+      dinhDang: '2D' 
+    };
+  }
   showModal.value = true;
-}
+};
 
 const saveShowtime = async () => {
+  if (saving.value) return;
   saving.value = true;
   try {
-    // Send standard ISO 
-    const payload = { ...formData.value, thoiGianBatDau: new Date(formData.value.thoiGianBatDau).toISOString() };
-    await api.post('/suat-chieu', payload);
+    const payload = { 
+      ...formData.value, 
+      thoiGianBatDau: new Date(formData.value.thoiGianBatDau).toISOString() 
+    };
+
+    if (isEdit.value) {
+      await api.put(`/suat-chieu/${formData.value.maSuatChieu}`, payload);
+    } else {
+      await api.post('/suat-chieu', payload);
+    }
     
     showModal.value = false;
     await fetchShowtimes(); 
-  } catch(e) {
-    alert(e.message || "Lỗi khi lưu suất chiếu. Kiểm tra lại phòng/phi giờ.");
+  } catch (e) {
+    alert(e.response?.data?.message || e.message || "Lỗi cập nhật. Hãy kiểm tra lại tính hợp lệ của thời gian.");
   } finally {
     saving.value = false;
   }
-}
+};
 
 const deleteShowtime = async (id) => {
-  if (confirm("Chắc chắn xóa suất chiếu này? (Sẽ lỗi nếu đã có khách đặt vé)")) {
-    try {
-      await api.delete(`/suat-chieu/${id}`);
-      await fetchShowtimes();
-    } catch(e) {
-      alert("Không thể xóa - đã có vé đặt cho suất này.");
-    }
+  if (!confirm("Hành động này sẽ hủy suất chiếu và toàn bộ vé. Bạn chắc chắn?")) return;
+  try {
+    await api.delete(`/suat-chieu/${id}`);
+    await fetchShowtimes();
+  } catch (e) {
+    alert("Không thể xóa suất chiếu này (đã có vé được đặt thành công).");
   }
-}
+};
+
+// --- DISPLAY ---
+const formatTime = (iso) => {
+  if (!iso) return '--:--';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+const calculateOccupancy = (s) => {
+  const total = (s.soGheTrong || 0) + (s.ves?.length || 0);
+  if (total <= 0) return 0;
+  return Math.round(((s.ves?.length || 0) / total) * 100);
+};
+
+const getStatusClass = (s) => {
+  const now = new Date();
+  const start = new Date(s.thoiGianBatDau);
+  if (start > now) return 'st-upcoming';
+  const end = new Date(start.getTime() + 120 * 60000);
+  if (now < end) return 'st-running';
+  return 'st-finished';
+};
+
+const getStatusLabel = (s) => {
+  const st = getStatusClass(s);
+  return st === 'st-upcoming' ? 'Sắp chiếu' : (st === 'st-running' ? 'Đang chiếu' : 'Đã xong');
+};
 </script>
 
 <style scoped>
-/* Reusing admin list styles */
-.m-0 { margin: 0; }
-.mb-4 { margin-bottom: 2rem; }
-.mt-4 { margin-top: 1.5rem; }
-.p-4 { padding: 2rem; }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
-.text-muted { color: var(--color-text-muted); }
-.text-success { color: var(--color-success); font-weight: 600; }
-.text-accent { color: var(--color-accent); font-weight: 600; }
+.showtime-management { padding: 1.5rem; max-width: 1700px; margin: 0 auto; color: #fff; }
+.header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
 
-.header-row { display: flex; justify-content: space-between; align-items: center; }
-.filter-box { padding: 1rem 1.5rem; }
-
-.action-btn { padding: 0.3rem 0.6rem; font-size: 0.85rem; margin-left: 0.5rem; }
-.text-error { color: var(--color-error) !important; }
-.border-error { border-color: rgba(255, 23, 68, 0.5) !important; }
-
-/* Table Styles - reused logic */
-.table-container { overflow-x: auto; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th, .data-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left; vertical-align: middle;}
-.data-table th { color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.85rem; }
-.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
-
-/* Modal Styles */
-.modal-backdrop {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
+/* Dashboard Toolbar */
+.filter-toolbar { 
+  display: flex; gap: 2rem; padding: 1.5rem 2rem; align-items: flex-end;
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
 }
-.modal-content { width: 100%; max-width: 600px; padding: 2.5rem; background: var(--color-bg-base); }
-.modal-content h3 { font-size: 1.5rem; color: var(--color-primary); }
-.row { display: flex; gap: 1rem; }
-.col { flex: 1; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+.divider { width: 1px; height: 50px; background: rgba(255,255,255,0.1); margin: 0 0.5rem; }
+.select-filters { display: flex; gap: 1.5rem; flex: 1; }
+.select-item { flex: 1; min-width: 150px; }
+
+.date-chips { display: flex; gap: 0.75rem; align-items: center; }
+.chip {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); padding: 0.6rem 1rem;
+  border-radius: 14px; cursor: pointer; transition: 0.3s;
+  display: flex; flex-direction: column; align-items: center; min-width: 75px;
+}
+.chip:hover { border-color: var(--color-primary); background: rgba(255,255,255,0.1); }
+.chip.active { background: var(--color-primary); color: #000; box-shadow: 0 4px 20px rgba(255,165,0,0.4); border: none; }
+.day-name { font-size: 0.65rem; font-weight: 700; opacity: 0.8; }
+.day-num { font-size: 1.1rem; font-weight: 900; }
+
+.date-input { width: 160px; background: rgba(0,0,0,0.4); }
+
+/* Room Boards */
+.room-grid { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 2rem; min-height: 60vh; }
+.room-column { min-width: 380px; flex: 1; display: flex; flex-direction: column; gap: 1.5rem; }
+
+.room-header { 
+  display: flex; justify-content: space-between; align-items: center; 
+  padding: 1rem 1.25rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);
+}
+.room-title { display: flex; align-items: center; gap: 12px; }
+.indicator { width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; box-shadow: 0 0 10px var(--color-primary); }
+.room-header h3 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+.count-badge { font-size: 0.7rem; font-weight: 900; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; }
+
+/* Showtime Cards */
+.st-card { 
+  position: relative; display: flex; padding: 1.5rem; transition: 0.35s;
+  border: 1px solid rgba(255,255,255,0.08); overflow: hidden;
+}
+.st-card:hover { transform: translateY(-5px); border-color: var(--color-primary); background: rgba(255,255,255,0.05); }
+
+.st-status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.st-upcoming .st-status-bar { background: #3498db; }
+.st-running .st-status-bar { background: #2ecc71; box-shadow: 2px 0 12px #2ecc71; }
+.st-finished .st-status-bar { background: #555; }
+
+.st-main { flex: 1; display: flex; flex-direction: column; gap: 0.8rem; }
+.st-time { display: flex; align-items: baseline; gap: 0.8rem; }
+.start-time { font-size: 1.6rem; font-weight: 900; color: #fff; line-height: 1; }
+.duration { font-size: 0.75rem; letter-spacing: 1px; font-weight: 700; opacity: 0.6; }
+
+.movie-title { font-size: 1.1rem; margin: 0; color: #fff; font-weight: 800; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.price-info { color: var(--color-primary); font-weight: 900; font-size: 0.95rem; }
+
+.st-occupancy { margin-top: 0.5rem; }
+.occ-text { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 700; margin-bottom: 0.5rem; opacity: 0.7; }
+.occ-progress { height: 5px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+.occ-fill { height: 100%; background: linear-gradient(90deg, var(--color-primary), #ffd43b); transition: 1s ease-out; }
+
+.st-actions { display: flex; flex-direction: column; gap: 15px; margin-left: 1rem; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 1.2rem; }
+.action-btn { background: rgba(255,255,255,0.03); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: #aaa; transition: 0.2s; display: grid; place-items: center; }
+.edit-btn:hover { background: rgba(52,152,219,0.15); color: #3498db; transform: scale(1.1); }
+.delete-btn:hover { background: rgba(231,76,60,0.15); color: #e74c3c; transform: scale(1.1); }
+
+/* Empty state */
+.empty-state { padding: 5rem; text-align: center; border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); }
+.empty-icon { font-size: 4rem; opacity: 0.2; margin-bottom: 1.5rem; }
+
+/* Modal Overlay & Card */
+.modal-root {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10000;
+  display: flex; align-items: center; justify-content: center; padding: 2rem;
+}
+.modal-dialog { width: 100%; max-width: 680px; padding: 3rem; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
+.modal-header h2 { font-size: 1.8rem; margin: 0; display: flex; align-items: center; gap: 15px; }
+
+.close-btn { background: none; border: none; color: #555; font-size: 2.5rem; cursor: pointer; transition: 0.3s; }
+.close-btn:hover { color: #fff; transform: rotate(90deg); }
+
+.price-input-group { position: relative; }
+.unit-text { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); opacity: 0.4; font-weight: 700; }
+.alert-box { background: rgba(52,152,219,0.05); border: 1px solid rgba(52,152,219,0.2); padding: 1.25rem; border-radius: 12px; color: #3498db; font-size: 0.85rem; display: flex; gap: 12px; align-items: center; }
+
+/* Animations */
+.animate-in { animation: fadeInScale 0.6s ease-out forwards; }
+@keyframes fadeInScale { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+.animate-modal { animation: modalIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(40px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.35s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>

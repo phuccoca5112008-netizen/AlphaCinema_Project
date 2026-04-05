@@ -92,7 +92,16 @@ public class PhimService : IPhimService
 
     public async Task DeleteAsync(int id)
     {
-        var phim = await _context.Phims.FindAsync(id) ?? throw new Exception("Phim không tồn tại.");
+        var phim = await _context.Phims
+            .Include(p => p.SuatChieus)
+            .FirstOrDefaultAsync(p => p.MaPhim == id) 
+            ?? throw new Exception("Phim không tồn tại.");
+
+        if (phim.SuatChieus.Any())
+        {
+            throw new Exception("Không thể xóa phim này vì đã có các suất chiếu liên quan. Vui lòng xóa các suất chiếu trước.");
+        }
+
         _context.Phims.Remove(phim);
         await _context.SaveChangesAsync();
     }

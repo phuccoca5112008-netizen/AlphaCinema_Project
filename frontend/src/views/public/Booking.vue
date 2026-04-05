@@ -14,9 +14,14 @@
             <span>Chọn Ghế</span>
           </div>
           <div class="step-line" :class="{ done: step > 2 }"></div>
-          <div class="step" :class="{ active: step >= 3 }">
-            <div class="step-circle">3</div>
-            <span>Xác Nhận & Thanh Toán</span>
+          <div class="step" :class="{ active: step === 2.5, done: step > 2.5 }">
+            <div class="step-circle">{{ step > 2.5 ? '✓' : '3' }}</div>
+            <span>Bắp Nước</span>
+          </div>
+          <div class="step-line" :class="{ done: step > 2.5 }"></div>
+          <div class="step" :class="{ active: step === 3 }">
+            <div class="step-circle">{{ step === 3 ? '4' : '4' }}</div>
+            <span>Thanh Toán</span>
           </div>
         </div>
       </div>
@@ -159,9 +164,89 @@
         />
 
         <div class="mt-4 text-right" v-if="pickedSeats.length > 0">
-          <button class="btn btn-primary" @click="step = 3">
-            Xác Nhận {{ pickedSeats.length }} Ghế →
+          <button class="btn btn-primary" @click="handleSeatConfirmation" :disabled="booking">
+            <span v-if="booking"><i class="fas fa-spinner fa-spin me-2"></i> ĐANG KHÓA GHẾ...</span>
+            <span v-else>Chọn Bắp Nước →</span>
           </button>
+        </div>
+      </div>
+
+      <!-- ══════════ STEP 2.5: Bắp Nước ══════════ -->
+      <div v-if="step === 2.5" class="step-content animate-fade-in">
+        <button class="btn btn-outline border-0 mb-4 px-0" @click="step = 2">
+          <i class="fas fa-chevron-left me-2"></i> QUAY LẠI CHỌN GHẾ
+        </button>
+        <h2 class="step-title mb-2">Chọn Thức Ăn & Đồ Uống</h2>
+        <p class="text-muted mb-4 subtitle-step">Nạp năng lượng cho trải nghiệm điện ảnh tuyệt vời hơn! (Có thể bỏ qua nếu muốn)</p>
+
+        <div v-if="loadingConcessions" class="loading-state glass-panel p-5">
+           <div class="spinner-large"></div>
+           <p>Đang lấy thực đơn bắp nước...</p>
+        </div>
+
+        <div v-else>
+          <!-- Category Tabs -->
+          <div class="category-tabs mb-5">
+            <button class="cat-pill" :class="{ active: selectedCategory === 'Tất cả' }" @click="selectedCategory = 'Tất cả'">
+               <i class="fas fa-th-large me-2"></i> Tất cả
+            </button>
+            <button class="cat-pill" :class="{ active: selectedCategory === 'Bắp' }" @click="selectedCategory = 'Bắp'">
+               <i class="fas fa-popcorn me-2"></i> Bắp Rang
+            </button>
+            <button class="cat-pill" :class="{ active: selectedCategory === 'Nước' }" @click="selectedCategory = 'Nước'">
+               <i class="fas fa-glass-whiskey me-2"></i> Nước Uống
+            </button>
+            <button class="cat-pill" :class="{ active: selectedCategory === 'Thức ăn' }" @click="selectedCategory = 'Thức ăn'">
+               <i class="fas fa-pizza-slice me-2"></i> Thức Ăn Nhẹ
+            </button>
+            <button class="cat-pill" :class="{ active: selectedCategory === 'Combo' }" @click="selectedCategory = 'Combo'">
+               <i class="fas fa-box-open me-2"></i> Combo Ưu Đãi
+            </button>
+          </div>
+
+          <div class="concessions-grid">
+            <div v-for="item in filteredConcessions" :key="item.maDoAnVat" class="concession-card glass-panel" :class="{ 'has-qty': concessionQuantities[item.maDoAnVat] > 0 }">
+              <div class="concession-img">
+                 <img :src="item.hinhAnh" :alt="item.tenMon" @error="concessionFallback">
+                 <div class="concession-type">{{ item.loai }}</div>
+                 <div class="selection-overlay" v-if="concessionQuantities[item.maDoAnVat] > 0">
+                    <i class="fas fa-check-circle"></i>
+                 </div>
+              </div>
+              <div class="concession-info">
+                <div class="c-title-box">
+                  <h3>{{ item.tenMon }}</h3>
+                  <div class="c-price">{{ item.gia.toLocaleString() }}đ</div>
+                </div>
+                <p class="c-desc">{{ item.moTa }}</p>
+                <div class="concession-footer">
+                  <div class="quantity-control-v2">
+                    <button class="q-btn-v2" @click="changeQty(item.maDoAnVat, -1)" :disabled="!concessionQuantities[item.maDoAnVat]">-</button>
+                    <span class="q-val-v2">{{ concessionQuantities[item.maDoAnVat] || 0 }}</span>
+                    <button class="q-btn-v2" @click="changeQty(item.maDoAnVat, 1)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="booking-footer-concession">
+             <div class="footer-summary-mini" v-if="selectedConcessionItems.length > 0">
+                <span class="fs-label">Đã chọn {{ selectedConcessionItems.length }} món:</span>
+                <span class="fs-total">{{ concessionSubtotal.toLocaleString() }}đ</span>
+             </div>
+             <div class="footer-summary-mini" v-else>
+                <span class="fs-label">Duyệt qua thực đơn hoặc chọn bỏ qua:</span>
+             </div>
+             <div class="footer-actions">
+                <button class="btn btn-skip" @click="step = 3">
+                   BỎ QUA & THANH TOÁN
+                </button>
+                <button class="btn btn-primary btn-next-step" @click="step = 3">
+                   {{ selectedConcessionItems.length > 0 ? 'XÁC NHẬN & TIẾP TỤC' : 'TIẾP TỤC THANH TOÁN' }} <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+             </div>
+          </div>
         </div>
       </div>
 
@@ -201,7 +286,7 @@
                   </div>
                 </div>
 
-                <div class="detail-row">
+                <div class="detail-row mb-4">
                   <div class="detail-col w-100">
                     <label class="detail-label">DANH SÁCH GHẾ ({{ pickedSeats.length }} Ghế)</label>
                     <div class="seats-display">
@@ -209,6 +294,18 @@
                         <span class="s-name">{{ g.hang }}{{ g.soGhe }}</span>
                         <span class="s-type">{{ g.loaiGhe === 'VIP' ? 'VIP' : 'Thường' }}</span>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-row" v-if="selectedConcessionItems.length > 0">
+                  <div class="detail-col w-100">
+                    <label class="detail-label">BẮP NƯỚC ĐÃ CHỌN</label>
+                    <div class="concessions-display mt-2">
+                       <div v-for="c in selectedConcessionItems" :key="c.maDoAnVat" class="c-display-item">
+                          <span class="c-name">{{ c.tenMon }} x{{ c.soLuong }}</span>
+                          <span class="c-subtotal">{{ (c.gia * c.soLuong).toLocaleString() }}đ</span>
+                       </div>
                     </div>
                   </div>
                 </div>
@@ -286,7 +383,14 @@
                   <div class="success-icon">✓</div>
                   <h2 class="bill-status">THANH TOÁN THÀNH CÔNG!</h2>
                   <p class="bill-id">Mã hóa đơn: <span>#{{ bookedResult?.maHoaDon }}</span></p>
-                  <div class="ticket-code-box animate-pulse-scale mt-3">
+                  
+                  <div class="success-qr-container mt-4 mb-4">
+                    <div class="qr-bill-border">
+                      <qrcode-vue :value="bookedResult?.maVaoCong" :size="180" level="H" background="#fff" foreground="#111" />
+                    </div>
+                  </div>
+
+                  <div class="ticket-code-box animate-pulse-scale">
                     <span class="t-label-code">MÃ VÀO CỔNG (QUÉT 1 LẦN)</span>
                     <h3 class="t-code">{{ bookedResult?.maVaoCong }}</h3>
                   </div>
@@ -335,6 +439,10 @@
                     <span>Số lượng vé:</span>
                     <span>{{ pickedSeats.length }} Vé</span>
                   </div>
+                  <div class="bs-row" v-if="selectedConcessionItems.length > 0">
+                    <span>Bắp nước:</span>
+                    <span>{{ selectedConcessionItems.length }} Món</span>
+                  </div>
                   <div class="bs-row">
                     <span>Phương thức:</span>
                     <span>{{ payMethods.find(m => m.id === payMethod)?.name || payMethod }}</span>
@@ -365,6 +473,14 @@
                     <span class="s-item-desc">{{ g.loaiGhe === 'VIP' ? 'Ghế VIP' : 'Ghế Thường' }}</span>
                   </div>
                   <span class="s-item-price">{{ seatPrice(g).toLocaleString() }}đ</span>
+                </div>
+
+                <div class="summary-item concession-summary" v-for="c in selectedConcessionItems" :key="c.maDoAnVat">
+                   <div class="s-item-info">
+                    <span class="s-item-name">{{ c.tenMon }}</span>
+                    <span class="s-item-desc">Số lượng: {{ c.soLuong }}</span>
+                  </div>
+                  <span class="s-item-price">{{ (c.gia * c.soLuong).toLocaleString() }}đ</span>
                 </div>
               </div>
 
@@ -410,6 +526,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import api from '../../api/axios';
 import SeatPicker from '../../components/public/SeatPicker.vue';
+import QrcodeVue from 'qrcode.vue';
 
 const route  = useRoute();
 const router = useRouter();
@@ -444,6 +561,12 @@ const discount     = ref(0);
 const payMethod  = ref('VNPay');
 const booking    = ref(false);
 
+// Concessions state
+const concessions = ref([]);
+const loadingConcessions = ref(false);
+const concessionQuantities = ref({});
+const selectedCategory = ref('Tất cả');
+
 const payMethods = [
   { id: 'VNPay',     name: 'Thanh toán qua VNPay' },
   { id: 'Momo',      name: 'Ví điện tử MoMo' },
@@ -454,6 +577,32 @@ const showQR = ref(false);
 const showBill = ref(false);
 const qrUrl = ref('');
 const bookedResult = ref(null);
+const pendingHoaDonId = ref(null);
+
+// ─── Seat Confirmation (Lock) ───
+const handleSeatConfirmation = async () => {
+    if (pickedSeats.value.length === 0) return;
+    
+    booking.value = true;
+    try {
+        const res = await api.post('/dat-ve/lock', {
+            maSuatChieu: selectedSuat.value.maSuatChieu,
+            maGheIds: pickedIds.value
+        });
+        if (res.success) {
+            pendingHoaDonId.value = res.data.maHoaDon;
+            step.value = 2.5; // Ir a la selección de bắp nước
+            loadConcessions();
+        }
+    } catch (e) {
+        alert(e.message || 'Ghế đã có người chọn trước đó, vui lòng chọn ghế khác!');
+        // Refresh seats
+        const resGhe = await api.get(`/suat-chieu/${selectedSuat.value.maSuatChieu}/ghe`);
+        if (resGhe.success) ghes.value = resGhe.data;
+    } finally {
+        booking.value = false;
+    }
+};
 
 // ─── Date Options (today + next 6 days) ───
 const dateOptions = computed(() => {
@@ -529,6 +678,10 @@ const suatByFormat = computed(() => {
 
 const selectSuat = async (s) => {
   selectedSuat.value = s;
+  // Automatically proceed to Step 2 after selection for smoother flow
+  setTimeout(() => {
+    step.value = 2;
+  }, 300);
 };
 
 // ─── Watch date change ───
@@ -550,6 +703,48 @@ watch(step, async (v) => {
 // ─── Seat map: group by row ───
 const pickedIds = computed(() => pickedSeats.value.map(g => g.maGhe));
 
+const filteredConcessions = computed(() => {
+    if (selectedCategory.value === 'Tất cả') return concessions.value;
+    return concessions.value.filter(c => c.loai === selectedCategory.value);
+});
+
+const loadConcessions = async () => {
+    loadingConcessions.value = true;
+    try {
+        const res = await api.get('/dat-ve/concessions');
+        if (res.success) {
+            concessions.value = res.data;
+            // Initialize quantities if not set
+            res.data.forEach(c => {
+                if (concessionQuantities.value[c.maDoAnVat] === undefined) {
+                    concessionQuantities.value[c.maDoAnVat] = 0;
+                }
+            });
+        }
+    } catch(e) { console.error(e); }
+    finally { loadingConcessions.value = false; }
+};
+
+const changeQty = (id, delta) => {
+    const current = concessionQuantities.value[id] || 0;
+    const next = Math.max(0, current + delta);
+    if (next > 10) return;
+    concessionQuantities.value[id] = next;
+};
+
+const selectedConcessionItems = computed(() => {
+    return concessions.value
+        .filter(c => concessionQuantities.value[c.maDoAnVat] > 0)
+        .map(c => ({
+            ...c,
+            soLuong: concessionQuantities.value[c.maDoAnVat]
+        }));
+});
+
+const concessionSubtotal = computed(() => {
+    return selectedConcessionItems.value.reduce((total, item) => total + (item.gia * item.soLuong), 0);
+});
+
 const toggleSeat = (ghe) => {
   if (ghe.daDat) return;
   const idx = pickedIds.value.indexOf(ghe.maGhe);
@@ -564,7 +759,10 @@ const toggleSeat = (ghe) => {
 // ─── Pricing ───
 const basePrice = computed(() => selectedSuat.value?.giaVeGoc || 0);
 const seatPrice = (g) => g.loaiGhe === 'VIP' ? basePrice.value * 1.5 : basePrice.value;
-const subtotal  = computed(() => pickedSeats.value.reduce((s, g) => s + seatPrice(g), 0));
+const subtotal  = computed(() => {
+    const seatTotal = pickedSeats.value.reduce((s, g) => s + seatPrice(g), 0);
+    return seatTotal + concessionSubtotal.value;
+});
 const totalAfterDiscount = computed(() => Math.max(0, subtotal.value - discount.value));
 
 // ─── Promo ───
@@ -606,10 +804,15 @@ const handlePaymentSuccess = async () => {
   booking.value = true;
   try {
     const res = await api.post('/dat-ve', {
+      maHoaDon: pendingHoaDonId.value,
       maSuatChieu: selectedSuat.value.maSuatChieu,
       maGheIds: pickedIds.value,
       maCodeGiamGia: promoApplied.value ? promoCode.value : null,
       phuongThucThanhToan: payMethod.value,
+      concessions: selectedConcessionItems.value.map(c => ({
+          maDoAnVat: c.maDoAnVat,
+          soLuong: c.soLuong
+      }))
     });
     if (res.success) {
       showQR.value = false;
@@ -628,6 +831,7 @@ const handlePaymentSuccess = async () => {
 };
 
 // ─── Helpers ───
+const concessionFallback = (e) => { e.target.src = 'https://placehold.co/200x200/1a1a1a/555?text=Food'; };
 const fallback   = (e) => { e.target.src = 'https://placehold.co/400x600/1a1a1a/555?text=No+Poster'; };
 const formatTime = (dt) => dt ? new Date(dt).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', hour12: false }) : '';
 const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekday:'long', day:'numeric', month:'numeric' }) : '';
@@ -810,6 +1014,251 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
   .checkout-sidebar { position: static; }
 }
 
+/* ─── Concessions CSS Revamp ─── */
+.subtitle-step { font-size: 0.95rem; font-weight: 500; opacity: 0.6; }
+
+.category-tabs {
+  display: flex;
+  gap: 1.2rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.2rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.category-tabs::-webkit-scrollbar { display: none; }
+
+.cat-pill {
+  background: rgba(255,255,255,0.02);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  padding: 0.9rem 1.8rem;
+  border-radius: 50px;
+  color: #777;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.cat-pill i { font-size: 1.1rem; }
+
+.cat-pill:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.2);
+  color: #bbb;
+}
+
+.cat-pill.active {
+  background: linear-gradient(135deg, var(--color-primary), #ff9800);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 8px 25px rgba(232, 136, 42, 0.5);
+  transform: translateY(-2px);
+}
+
+.concessions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2.5rem;
+  margin-top: 1rem;
+}
+
+.concession-card {
+  display: flex;
+  flex-direction: row;
+  height: 190px;
+  border-radius: 24px;
+  overflow: hidden;
+  transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.01);
+  position: relative;
+}
+
+.concession-card.has-qty {
+  border-color: var(--color-primary);
+  background: rgba(232, 136, 42, 0.05);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+.concession-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.03);
+}
+
+.concession-img {
+  position: relative;
+  width: 150px;
+  height: 100%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.concession-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.concession-card:hover .concession-img img {
+  transform: scale(1.2);
+}
+
+.selection-overlay {
+  position: absolute; inset: 0;
+  background: rgba(232, 136, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem; color: white;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.concession-type {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.concession-info {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.c-title-box { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem; gap: 0.5rem; }
+.c-title-box h3 { font-size: 1.15rem; font-weight: 800; color: white; line-height: 1.2; letter-spacing: -0.5px; }
+.c-price { font-size: 1.2rem; font-weight: 900; color: #00e676; text-shadow: 0 0 15px rgba(0,230,118,0.2); }
+
+.c-desc {
+  font-size: 0.85rem;
+  color: #777;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  flex: 1;
+}
+
+.concession-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.8rem;
+}
+
+.quantity-control-v2 {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  background: rgba(0,0,0,0.4);
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.q-btn-v2 {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.05);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.q-btn-v2:disabled { opacity: 0.2; cursor: default; }
+.q-btn-v2:not(:disabled):hover { background: var(--color-primary); transform: scale(1.1); }
+.q-btn-v2:active { transform: scale(0.9); }
+
+.q-val-v2 { font-size: 1.1rem; font-weight: 800; color: white; min-width: 24px; text-align: center; }
+
+/* Booking Footer Concession */
+.booking-footer-concession {
+  margin-top: 6rem;
+  padding: 3rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.footer-summary-mini { display: flex; flex-direction: column; }
+.fs-label { font-size: 0.9rem; color: #555; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 1px; }
+.fs-total { font-size: 2.2rem; font-weight: 950; color: var(--color-primary); text-shadow: 0 0 30px rgba(232,136,42,0.3); }
+
+.footer-actions { display: flex; gap: 1.5rem; }
+.btn-skip { background: transparent; color: #666; border: 2px solid rgba(255,255,255,0.1); padding: 1.1rem 2.2rem; border-radius: 18px; font-weight: 800; font-size: 0.95rem; transition: 0.3s; }
+.btn-skip:hover { background: rgba(255,255,255,0.05); color: #999; border-color: rgba(255,255,255,0.3); }
+.btn-next-step { padding: 1.1rem 3.5rem; font-size: 1.15rem; font-weight: 900; border-radius: 18px; box-shadow: 0 12px 35px rgba(232, 136, 42, 0.4); text-transform: uppercase; letter-spacing: 1px; }
+.btn-next-step:hover { transform: translateY(-3px); box-shadow: 0 15px 45px rgba(232, 136, 42, 0.5); }
+
+/* Concession Display in Bill */
+.concessions-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.c-display-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem 1.2rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.c-name { font-size: 0.95rem; font-weight: 700; color: #eee; }
+.c-subtotal { font-size: 0.95rem; font-weight: 700; color: #aaa; }
+
+.loading-state {
+  text-align: center;
+  border-radius: 30px;
+  margin-top: 3rem;
+}
+
+.spinner-large {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(232, 136, 42, 0.1);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ─── VietQR Modal ─── */
 .qr-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85);
@@ -870,6 +1319,20 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 .bill-status { font-weight: 900; font-size: 1.8rem; letter-spacing: -1px; margin-bottom: 0.5rem; }
 .bill-id { font-size: 1.1rem; color: #666; font-weight: 600; }
 .bill-id span { color: var(--color-primary); font-weight: 800; }
+
+.success-qr-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-bill-border {
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  display: flex;
+}
 
 .ticket-visual { 
   display: flex; gap: 2rem; background: #f8f9fa; border: 2px dashed #ddd;

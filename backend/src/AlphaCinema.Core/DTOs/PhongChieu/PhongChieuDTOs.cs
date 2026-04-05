@@ -12,12 +12,14 @@ public class PhongChieuResponse
 {
     public int MaPhong { get; set; }
     public string TenPhong { get; set; } = string.Empty;
+    public string LoaiPhong { get; set; } = "Standard";
     public List<GheResponse> Ghes { get; set; } = new();
 }
 
 public class CreatePhongChieuRequest
 {
     public string TenPhong { get; set; } = string.Empty;
+    public string LoaiPhong { get; set; } = "Standard";
 }
 
 public class GenerateGheRequest

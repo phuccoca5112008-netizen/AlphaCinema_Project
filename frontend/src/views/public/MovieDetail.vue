@@ -40,16 +40,19 @@
             <div class="rating-input mt-3">
               <span v-for="i in 5" :key="i" class="star-btn" 
                 :class="{ active: newReview.diemSo >= i }" 
-                @click="newReview.diemSo = i">⭐</span>
+                @click="newReview.diemSo = i">★</span>
             </div>
             <textarea 
               v-model="newReview.noiDung" 
-              placeholder="Viết bình luận của bạn tại đây..." 
-              class="form-control mt-3"
-              rows="3"></textarea>
-            <button @click="submitReview" class="btn btn-primary mt-3" :disabled="submitting">
-              {{ submitting ? 'Đang gửi...' : 'Gửi đánh giá' }}
-            </button>
+              placeholder="Chia sẻ cảm nhận của bạn về bộ phim này..." 
+              class="custom-textarea mt-2"
+              rows="4"></textarea>
+            <div class="d-flex justify-content-end">
+              <button @click="submitReview" class="btn btn-primary mt-3" :disabled="submitting">
+                <i class="fas fa-paper-plane mr-2"></i>
+                {{ submitting ? 'Đang gửi...' : 'Gửi đánh giá' }}
+              </button>
+            </div>
           </div>
           
           <div v-else-if="user" class="review-info-box mt-4">
@@ -297,17 +300,71 @@ onMounted(async () => {
   .title { font-size: 2rem; }
 }
 
-/* REVIEWS STYLES */
+        /* REVIEWS STYLES */
 .reviews-section {
   border-top: 1px solid rgba(255,255,255,0.05);
 }
-.section-header h3 { font-size: 1.5rem; color: #fff; }
+.section-header h3 { font-size: 1.5rem; color: #fff; margin-bottom: 2rem; }
 
 .glass-panel-inner {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  padding: 1.5rem;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 2rem;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+}
+
+/* Star Rating Style */
+.rating-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.star-btn {
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: rgba(255,255,255,0.1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+  color: var(--color-warning);
+}
+
+.star-btn.active {
+  color: var(--color-warning);
+  text-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+}
+
+/* Textarea Style */
+.custom-textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.2rem;
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.custom-textarea:focus {
+  border-color: var(--color-primary);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px rgba(232, 136, 42, 0.1);
+}
+
+.review-form h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 1rem;
 }
 
 .review-info-box {
@@ -320,56 +377,56 @@ onMounted(async () => {
   text-align: center;
 }
 
-.star-btn {
-  font-size: 1.5rem;
-  cursor: pointer;
-  filter: grayscale(1);
-  transition: 0.2s;
-}
-.star-btn.active { filter: grayscale(0); transform: scale(1.1); }
-
 .review-card {
-  background: rgba(0,0,0,0.2);
-  padding: 1.25rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  border-left: 2px solid transparent;
+  background: rgba(255,255,255,0.02);
+  padding: 1.5rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.03);
   transition: 0.3s;
 }
-.review-card:hover { border-left-color: var(--color-primary); background: rgba(0,0,0,0.3); }
+
+.review-card:hover { 
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+}
 
 .rc-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .rc-user {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .avatar-sm {
-  width: 32px; height: 32px;
-  background: var(--color-primary);
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 0.8rem;
+  font-weight: 800; font-size: 0.9rem;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .rc-meta {
   display: flex;
-  gap: 1rem;
-  font-size: 0.8rem;
+  gap: 1.5rem;
+  font-size: 0.85rem;
 }
-.rc-rating { color: var(--color-warning); font-weight: 700; }
-.rc-date { color: var(--color-text-muted); }
+.rc-rating { color: var(--color-warning); font-weight: 800; display: flex; align-items: center; gap: 4px; }
+.rc-date { color: var(--color-text-muted); opacity: 0.7; }
 
 .rc-content {
-  color: #ddd;
-  line-height: 1.6;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.7;
+  font-size: 1rem;
+  padding-left: 0.25rem;
 }
 
 .animate-slide-up { animation: slideUp 0.5s ease-out; }

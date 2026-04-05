@@ -62,6 +62,149 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.ToTable("DanhGia", (string)null);
                 });
 
+            modelBuilder.Entity("AlphaCinema.Core.Entities.DoAnVat", b =>
+                {
+                    b.Property<int>("MaDoAnVat")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ma_do_an_vat");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaDoAnVat"));
+
+                    b.Property<decimal>("Gia")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("gia");
+
+                    b.Property<string>("HinhAnh")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("hinh_anh");
+
+                    b.Property<string>("Loai")
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("loai");
+
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(500)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("mo_ta");
+
+                    b.Property<string>("TenMon")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("ten_mon");
+
+                    b.HasKey("MaDoAnVat");
+
+                    b.ToTable("DoAnVat", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            MaDoAnVat = 1,
+                            Gia = 45000m,
+                            HinhAnh = "/assets/concessions/bap_caramel_m.png",
+                            Loai = "Bắp",
+                            MoTa = "Bắp rang vị caramel thơm ngọt size vừa",
+                            TenMon = "Bắp Rang Ngọt Caramel (M)"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 2,
+                            Gia = 55000m,
+                            HinhAnh = "/assets/concessions/bap_caramel_m.png",
+                            Loai = "Bắp",
+                            MoTa = "Bắp rang vị caramel thơm ngọt size lớn",
+                            TenMon = "Bắp Rang Ngọt Caramel (L)"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 3,
+                            Gia = 45000m,
+                            HinhAnh = "/assets/concessions/bap_phomai_l.png",
+                            Loai = "Bắp",
+                            MoTa = "Bắp rang vị phô mai mặn mà size vừa",
+                            TenMon = "Bắp Rang Phô Mai (M)"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 4,
+                            Gia = 55000m,
+                            HinhAnh = "/assets/concessions/bap_phomai_l.png",
+                            Loai = "Bắp",
+                            MoTa = "Bắp rang vị phô mai mặn mà size lớn",
+                            TenMon = "Bắp Rang Phô Mai (L)"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 5,
+                            Gia = 35000m,
+                            HinhAnh = "/assets/concessions/coca_l.png",
+                            Loai = "Nước",
+                            MoTa = "Nước ngọt Coca Cola mát lạnh size lớn",
+                            TenMon = "Coca Cola (L)"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 6,
+                            Gia = 35000m,
+                            HinhAnh = "/assets/concessions/coca_l.png",
+                            Loai = "Nước",
+                            MoTa = "Nước ngọt Pepsi mát lạnh size lớn",
+                            TenMon = "Pepsi (L)"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 7,
+                            Gia = 45000m,
+                            HinhAnh = "/assets/concessions/cam_tuoi.png",
+                            Loai = "Nước",
+                            MoTa = "Nước cam ép nguyên chất giàu vitamin",
+                            TenMon = "Nước Cam Tươi"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 8,
+                            Gia = 50000m,
+                            HinhAnh = "/assets/concessions/milo_trachanh.png",
+                            Loai = "Nước",
+                            MoTa = "Thức uống sáng tạo kết hợp Milo và Trà xanh",
+                            TenMon = "Milo Trà Xanh Đậu Đen"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 9,
+                            Gia = 75000m,
+                            HinhAnh = "/assets/concessions/pizza_mini.png",
+                            Loai = "Thức ăn",
+                            MoTa = "Pizza cỡ nhỏ phủ xúc xích và phô mai",
+                            TenMon = "Pizza Xúc Xích Mini"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 10,
+                            Gia = 75000m,
+                            HinhAnh = "/assets/concessions/combo_single.png",
+                            Loai = "Combo",
+                            MoTa = "1 Bắp (M) + 1 Nước (L) - Tiết kiệm hơn",
+                            TenMon = "Combo Single Alpha"
+                        },
+                        new
+                        {
+                            MaDoAnVat = 11,
+                            Gia = 115000m,
+                            HinhAnh = "/assets/concessions/combo_couple.png",
+                            Loai = "Combo",
+                            MoTa = "1 Bắp (L) + 2 Nước (L) - Cho cặp đôi",
+                            TenMon = "Combo Couple Alpha"
+                        });
+                });
+
             modelBuilder.Entity("AlphaCinema.Core.Entities.Ghe", b =>
                 {
                     b.Property<int>("MaGhe")
@@ -114,6 +257,11 @@ namespace AlphaCinema.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("ma_nguoi_dung");
 
+                    b.Property<string>("MaVaoCong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ma_vao_cong");
+
                     b.Property<DateTime>("NgayGiaoDich")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -130,6 +278,14 @@ namespace AlphaCinema.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("tong_tien");
 
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Đã thanh toán")
+                        .HasColumnName("trang_thai");
+
                     b.HasKey("MaHoaDon");
 
                     b.HasIndex("MaKhuyenMai");
@@ -137,6 +293,40 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.HasIndex("MaNguoiDung");
 
                     b.ToTable("HoaDon", (string)null);
+                });
+
+            modelBuilder.Entity("AlphaCinema.Core.Entities.HoaDonDoAnVat", b =>
+                {
+                    b.Property<int>("MaHoaDonDoAnVat")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("ma_hoa_don_do_an_vat");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaHoaDonDoAnVat"));
+
+                    b.Property<decimal>("DonGia")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("don_gia");
+
+                    b.Property<int>("MaDoAnVat")
+                        .HasColumnType("int")
+                        .HasColumnName("ma_do_an_vat");
+
+                    b.Property<int>("MaHoaDon")
+                        .HasColumnType("int")
+                        .HasColumnName("ma_hoa_don");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int")
+                        .HasColumnName("so_luong");
+
+                    b.HasKey("MaHoaDonDoAnVat");
+
+                    b.HasIndex("MaDoAnVat");
+
+                    b.HasIndex("MaHoaDon");
+
+                    b.ToTable("HoaDonDoAnVat", (string)null);
                 });
 
             modelBuilder.Entity("AlphaCinema.Core.Entities.KhuyenMai", b =>
@@ -159,6 +349,9 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.Property<decimal?>("GiamToiDa")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("giam_toi_da");
+
+                    b.Property<string>("HinhAnh")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LoaiGiamGia")
                         .IsRequired()
@@ -184,9 +377,13 @@ namespace AlphaCinema.Infrastructure.Migrations
                         .HasColumnType("date")
                         .HasColumnName("ngay_ket_thuc");
 
+                    b.Property<string>("PhanLoai")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("TenKhuyenMai")
                         .IsRequired()
                         .HasMaxLength(255)
+                        .IsUnicode(true)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("ten_khuyen_mai");
 
@@ -219,6 +416,7 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.Property<string>("HoTen")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .IsUnicode(true)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("ho_ten");
 
@@ -259,12 +457,14 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.Property<string>("TenPhim")
                         .IsRequired()
                         .HasMaxLength(255)
+                        .IsUnicode(true)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("ten_phim");
 
                     b.Property<string>("TheLoai")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .IsUnicode(true)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("the_loai");
 
@@ -298,10 +498,18 @@ namespace AlphaCinema.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhong"));
 
-                    b.Property<string>("TenPhong")
+                    b.Property<string>("LoaiPhong")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .IsUnicode(true)
                         .HasColumnType("nvarchar(50)")
+                        .HasColumnName("loai_phong");
+
+                    b.Property<string>("TenPhong")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("ten_phong");
 
                     b.HasKey("MaPhong");
@@ -418,6 +626,11 @@ namespace AlphaCinema.Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("ma_suat_chieu");
 
+                    b.Property<string>("MaVaoCong")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("ma_vao_cong");
+
                     b.Property<string>("TrangThai")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -431,7 +644,8 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.HasIndex("MaHoaDon");
 
                     b.HasIndex("MaSuatChieu", "MaGhe")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[trang_thai] <> N'Đã hủy'");
 
                     b.ToTable("Ve", (string)null);
                 });
@@ -482,6 +696,25 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.Navigation("KhuyenMai");
 
                     b.Navigation("NguoiDung");
+                });
+
+            modelBuilder.Entity("AlphaCinema.Core.Entities.HoaDonDoAnVat", b =>
+                {
+                    b.HasOne("AlphaCinema.Core.Entities.DoAnVat", "DoAnVat")
+                        .WithMany("HoaDonDoAnVats")
+                        .HasForeignKey("MaDoAnVat")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AlphaCinema.Core.Entities.HoaDon", "HoaDon")
+                        .WithMany("HoaDonDoAnVats")
+                        .HasForeignKey("MaHoaDon")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DoAnVat");
+
+                    b.Navigation("HoaDon");
                 });
 
             modelBuilder.Entity("AlphaCinema.Core.Entities.NguoiDung", b =>
@@ -541,6 +774,11 @@ namespace AlphaCinema.Infrastructure.Migrations
                     b.Navigation("SuatChieu");
                 });
 
+            modelBuilder.Entity("AlphaCinema.Core.Entities.DoAnVat", b =>
+                {
+                    b.Navigation("HoaDonDoAnVats");
+                });
+
             modelBuilder.Entity("AlphaCinema.Core.Entities.Ghe", b =>
                 {
                     b.Navigation("Ves");
@@ -548,6 +786,8 @@ namespace AlphaCinema.Infrastructure.Migrations
 
             modelBuilder.Entity("AlphaCinema.Core.Entities.HoaDon", b =>
                 {
+                    b.Navigation("HoaDonDoAnVats");
+
                     b.Navigation("Ves");
                 });
 

@@ -15,4 +15,5 @@ public class HoaDon
     public KhuyenMai? KhuyenMai { get; set; }
     public NguoiDung NguoiDung { get; set; } = null!;
     public ICollection<Ve> Ves { get; set; } = new List<Ve>();
+    public virtual ICollection<HoaDonDoAnVat> HoaDonDoAnVats { get; set; } = new List<HoaDonDoAnVat>();
 }

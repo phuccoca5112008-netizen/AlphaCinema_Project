@@ -18,6 +18,7 @@ public class KhuyenMaiService : IKhuyenMaiService
         NgayBatDau = k.NgayBatDau, NgayKetThuc = k.NgayKetThuc,
         LoaiGiamGia = k.LoaiGiamGia, GiaTriGiam = k.GiaTriGiam,
         GiamToiDa = k.GiamToiDa, DonHangToiThieu = k.DonHangToiThieu,
+        HinhAnh = k.HinhAnh, PhanLoai = k.PhanLoai,
         ConHieuLuc = k.NgayBatDau <= DateTime.Now && k.NgayKetThuc >= DateTime.Now
     };
 
@@ -65,7 +66,8 @@ public class KhuyenMaiService : IKhuyenMaiService
             TenKhuyenMai = request.TenKhuyenMai, MaCodeGiamGia = request.MaCodeGiamGia,
             MoTa = request.MoTa, NgayBatDau = request.NgayBatDau, NgayKetThuc = request.NgayKetThuc,
             LoaiGiamGia = request.LoaiGiamGia, GiaTriGiam = request.GiaTriGiam,
-            GiamToiDa = request.GiamToiDa, DonHangToiThieu = request.DonHangToiThieu
+            GiamToiDa = request.GiamToiDa, DonHangToiThieu = request.DonHangToiThieu,
+            HinhAnh = request.HinhAnh, PhanLoai = request.PhanLoai
         };
         _context.KhuyenMais.Add(km);
         await _context.SaveChangesAsync();
@@ -79,6 +81,7 @@ public class KhuyenMaiService : IKhuyenMaiService
         km.NgayBatDau = request.NgayBatDau; km.NgayKetThuc = request.NgayKetThuc;
         km.LoaiGiamGia = request.LoaiGiamGia; km.GiaTriGiam = request.GiaTriGiam;
         km.GiamToiDa = request.GiamToiDa; km.DonHangToiThieu = request.DonHangToiThieu;
+        km.HinhAnh = request.HinhAnh; km.PhanLoai = request.PhanLoai;
         await _context.SaveChangesAsync();
         return ToResponse(km);
     }

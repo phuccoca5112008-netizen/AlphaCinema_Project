@@ -39,8 +39,30 @@ public class PhongChieuController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
-        await _service.DeleteAsync(id);
-        return Ok(new { success = true, message = "Xóa phòng chiếu thành công" });
+        try
+        {
+            await _service.DeleteAsync(id);
+            return Ok(new { success = true, message = "Xóa phòng chiếu thành công" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Update(int id, [FromBody] CreatePhongChieuRequest request)
+    {
+        try
+        {
+            await _service.UpdateAsync(id, request);
+            return Ok(new { success = true, message = "Cập nhật phòng chiếu thành công" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
     }
 
     [HttpPost("{id}/ghe/generate")]

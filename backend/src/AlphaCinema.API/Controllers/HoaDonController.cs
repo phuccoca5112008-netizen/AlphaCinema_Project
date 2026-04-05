@@ -47,7 +47,7 @@ public class HoaDonController : ControllerBase
 
     /// <summary>Thống kê doanh thu (Admin)</summary>
     [HttpGet("doanh-thu")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> GetDoanhThu([FromQuery] DateTime? tuNgay, [FromQuery] DateTime? denNgay)
     {
         var result = await _service.GetDoanhThuAsync(tuNgay, denNgay);

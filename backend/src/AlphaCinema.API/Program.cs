@@ -32,6 +32,7 @@ builder.Services.AddScoped<IHoaDonService, HoaDonService>();
 builder.Services.AddScoped<IKhuyenMaiService, KhuyenMaiService>();
 builder.Services.AddScoped<IDanhGiaService, DanhGiaService>();
 builder.Services.AddScoped<INguoiDungService, NguoiDungService>();
+builder.Services.AddScoped<IThanhVienService, ThanhVienService>();
 
 // ===== FLUENT VALIDATION =====
 builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
@@ -131,10 +132,11 @@ using (var scope = app.Services.CreateScope())
         db.Database.ExecuteSqlRaw(
             "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HoaDon') AND name = 'ma_vao_cong') ALTER TABLE HoaDon ADD ma_vao_cong NVARCHAR(50); " +
             "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HoaDon') AND name = 'trang_thai') ALTER TABLE HoaDon ADD trang_thai NVARCHAR(50); " +
-            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Ve') AND name = 'trang_thai') ALTER TABLE Ve ADD trang_thai NVARCHAR(50); "
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Ve') AND name = 'trang_thai') ALTER TABLE Ve ADD trang_thai NVARCHAR(50); " +
+            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PhongChieu') AND name = 'LoaiPhong') ALTER TABLE PhongChieu ADD LoaiPhong NVARCHAR(MAX) NOT NULL DEFAULT '2D'; "
         );
-    } catch { 
-        Console.WriteLine("[DB Warning] Could not enforce schema updates automatically.");
+    } catch (Exception ex) { 
+        Console.WriteLine($"[DB Warning] Could not enforce schema updates automatically: {ex.Message}");
     }
 }
 

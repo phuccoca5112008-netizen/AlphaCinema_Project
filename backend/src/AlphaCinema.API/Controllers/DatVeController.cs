@@ -81,7 +81,22 @@ public class DatVeController : ControllerBase
         return Ok(new { success = true, data = result });
     }
 
-    /// <summary>Kiểm tra và check-in vé (Admin/Staff)</summary>
+    /// <summary>Khóa ghế tạm thời (Pending lock)</summary>
+    [HttpPost("lock")]
+    [Authorize]
+    public async Task<IActionResult> LockSeats([FromBody] LockSeatsRequest request)
+    {
+        try
+        {
+            var result = await _service.LockSeatsAsync(GetUserId(), request);
+            return Ok(new { success = true, data = result });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpPost("check-in")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> CheckIn([FromBody] CheckInTicketRequest request)
@@ -89,11 +104,32 @@ public class DatVeController : ControllerBase
         try
         {
             var result = await _service.CheckInTicketAsync(request.Code);
-            return Ok(new { success = true, data = result, message = "Vé hợp lệ. Đã thực hiện check-in thành công." });
+            string msg = result.DaCheckIn 
+                ? "CẢNH BÁO: Vé này đã được sử dụng trước đó!" 
+                : "HỢP LỆ: Đã thực hiện check-in thành công.";
+                
+            return Ok(new { success = true, data = result, message = msg });
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>Lấy danh sách bắp nước (Concessions)</summary>
+    [HttpGet("concessions")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetConcessions()
+    {
+        try
+        {
+            var result = await _service.GetConcessionsAsync();
+            return Ok(new { success = true, data = result });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] GetConcessions: {ex.Message}");
+            return StatusCode(500, new { success = false, message = "Lỗi khi lấy danh sách bắp nước.", details = ex.Message });
         }
     }
 }

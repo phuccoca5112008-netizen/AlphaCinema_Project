@@ -16,7 +16,7 @@
           <span class="text">Phim</span>
         </router-link>
         <router-link to="/admin/rooms" class="nav-item">
-          <span class="icon">🎟️</span>
+          <span class="icon">🏢</span>
           <span class="text">Phòng Chiếu & Ghế</span>
         </router-link>
         <router-link to="/admin/showtimes" class="nav-item">
@@ -24,7 +24,7 @@
           <span class="text">Suất Chiếu</span>
         </router-link>
         <router-link to="/admin/promotions" class="nav-item">
-          <span class="icon">🎟️</span>
+          <span class="icon">🎁</span>
           <span class="text">Khuyến Mãi</span>
         </router-link>
         <router-link to="/admin/invoices" class="nav-item">

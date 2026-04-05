@@ -82,9 +82,9 @@
 import { ref, onMounted, computed } from 'vue';
 import api from '../../api/axios';
 import { Pie } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js';
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, PieController } from 'chart.js';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale);
+ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, PieController);
 
 const doanhThuData = ref([]);
 const totalRevenue = ref(0);
@@ -171,8 +171,13 @@ onMounted(async () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
     
-    const tuNgay = thirtyDaysAgo.toISOString().split('T')[0];
-    const denNgay = today.toISOString().split('T')[0];
+    // Use local date strings to avoid UTC skew
+    const formatDate = (d) => d.getFullYear() + '-' + 
+                              String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+                              String(d.getDate()).padStart(2, '0');
+
+    const tuNgay = formatDate(thirtyDaysAgo);
+    const denNgay = formatDate(today);
 
     const res = await api.get(`/hoa-don/doanh-thu?tuNgay=${tuNgay}&denNgay=${denNgay}`);
     if (res.success) {

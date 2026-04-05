@@ -11,14 +11,22 @@ public class NguoiDungService : INguoiDungService
 
     public NguoiDungService(AlphaCinemaDbContext context) => _context = context;
 
+    private string GetHang(int diem)
+    {
+        if (diem >= 1500) return "Kim Cương";
+        if (diem >= 500) return "Vàng";
+        return "Bạc";
+    }
+
     public async Task<IEnumerable<NguoiDungResponse>> GetAllAsync()
         => await _context.NguoiDungs.Include(u => u.VaiTro)
-            .Select(u => new NguoiDungResponse
+            .ToListAsync()
+            .ContinueWith(t => t.Result.Select(u => new NguoiDungResponse
             {
                 MaNguoiDung = u.MaNguoiDung, Email = u.Email,
                 HoTen = u.HoTen, VaiTro = u.VaiTro.TenVaiTro,
-                DiemTichLuy = u.DiemTichLuy
-            }).ToListAsync();
+                DiemTichLuy = u.DiemTichLuy, HangThanhVien = GetHang(u.DiemTichLuy)
+            }));
 
     public async Task<NguoiDungResponse?> GetByIdAsync(int id)
     {
@@ -27,7 +35,8 @@ public class NguoiDungService : INguoiDungService
         return new NguoiDungResponse
         {
             MaNguoiDung = u.MaNguoiDung, Email = u.Email,
-            HoTen = u.HoTen, VaiTro = u.VaiTro.TenVaiTro, DiemTichLuy = u.DiemTichLuy
+            HoTen = u.HoTen, VaiTro = u.VaiTro.TenVaiTro, 
+            DiemTichLuy = u.DiemTichLuy, HangThanhVien = GetHang(u.DiemTichLuy)
         };
     }
 
@@ -50,7 +59,6 @@ public class NguoiDungService : INguoiDungService
 
         if (!string.IsNullOrEmpty(request.MatKhauMoi))
         {
-            // Nếu có MatKhauCu thì verify, nếu không (Admin) thì cho phép đổi thẳng
             if (!string.IsNullOrEmpty(request.MatKhauCu))
             {
                 if (!BCrypt.Net.BCrypt.Verify(request.MatKhauCu, u.MatKhau))
@@ -63,7 +71,8 @@ public class NguoiDungService : INguoiDungService
         return new NguoiDungResponse
         {
             MaNguoiDung = u.MaNguoiDung, Email = u.Email,
-            HoTen = u.HoTen, VaiTro = u.VaiTro.TenVaiTro, DiemTichLuy = u.DiemTichLuy
+            HoTen = u.HoTen, VaiTro = u.VaiTro.TenVaiTro, 
+            DiemTichLuy = u.DiemTichLuy, HangThanhVien = GetHang(u.DiemTichLuy)
         };
     }
 

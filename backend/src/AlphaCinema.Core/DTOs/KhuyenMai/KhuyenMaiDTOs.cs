@@ -13,6 +13,8 @@ public class KhuyenMaiResponse
     public decimal? GiamToiDa { get; set; }
     public decimal? DonHangToiThieu { get; set; }
     public bool ConHieuLuc { get; set; }
+    public string? HinhAnh { get; set; }
+    public string? PhanLoai { get; set; }
 }
 
 public class CreateKhuyenMaiRequest
@@ -26,6 +28,8 @@ public class CreateKhuyenMaiRequest
     public decimal GiaTriGiam { get; set; }
     public decimal? GiamToiDa { get; set; }
     public decimal? DonHangToiThieu { get; set; }
+    public string? HinhAnh { get; set; }
+    public string? PhanLoai { get; set; }
 }
 
 public class ApDungKhuyenMaiRequest

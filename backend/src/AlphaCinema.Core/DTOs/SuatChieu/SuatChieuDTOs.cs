@@ -24,6 +24,8 @@ public class CreateSuatChieuRequest
 
 public class UpdateSuatChieuRequest
 {
+    public int? MaPhim { get; set; }
+    public int? MaPhong { get; set; }
     public DateTime? ThoiGianBatDau { get; set; }
     public string? DinhDang { get; set; }
     public decimal? GiaVeGoc { get; set; }

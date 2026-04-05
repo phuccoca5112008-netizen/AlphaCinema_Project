@@ -13,6 +13,7 @@ public class HoaDonResponse
     public string? TrangThai { get; set; }
     public string? TenPhim { get; set; }
     public string? DanhSachGhe { get; set; }
+    public string? DanhSachDoAn { get; set; }
 }
 
 public class DoanhThuResponse

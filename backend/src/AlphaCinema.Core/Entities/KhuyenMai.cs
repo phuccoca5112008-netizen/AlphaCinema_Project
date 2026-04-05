@@ -13,6 +13,9 @@ public class KhuyenMai
     public decimal? GiamToiDa { get; set; }          // Mức giảm tối đa (VNĐ)
     public decimal? DonHangToiThieu { get; set; }    // Đơn hàng tối thiểu
 
+    public string? HinhAnh { get; set; }             // Ảnh poster khuyến mãi
+    public string? PhanLoai { get; set; }            // Phân loại: VIP MEMBER, ƯU ĐÃI HOT, STUDENT DEAL...
+
     // Navigation
     public ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
 }

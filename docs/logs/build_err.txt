@@ -1,0 +1,14 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+  AlphaCinema.Core -> C:\Users\Tam Phuc\Documents\AlphaCinema_Project\backend\src\AlphaCinema.Core\bin\Debug\net9.0\AlphaCinema.Core.dll
+  AlphaCinema.Infrastructure -> C:\Users\Tam Phuc\Documents\AlphaCinema_Project\backend\src\AlphaCinema.Infrastructure\bin\Debug\net9.0\AlphaCinema.Infrastructure.dll
+  AlphaCinema.Services -> C:\Users\Tam Phuc\Documents\AlphaCinema_Project\backend\src\AlphaCinema.Services\bin\Debug\net9.0\AlphaCinema.Services.dll
+  AlphaCinema.API -> C:\Users\Tam Phuc\Documents\AlphaCinema_Project\backend\src\AlphaCinema.API\bin\Debug\net9.0\AlphaCinema.API.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.52
+
+Workload updates are available. Run `dotnet workload list` for more information.

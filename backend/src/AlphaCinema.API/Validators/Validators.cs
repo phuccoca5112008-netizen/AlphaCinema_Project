@@ -46,7 +46,7 @@ public class CreateSuatChieuRequestValidator : AbstractValidator<CreateSuatChieu
         RuleFor(x => x.MaPhong).GreaterThan(0);
         RuleFor(x => x.MaPhim).GreaterThan(0);
         RuleFor(x => x.ThoiGianBatDau).GreaterThan(DateTime.Now).WithMessage("Thời gian chiếu phải là tương lai.");
-        RuleFor(x => x.DinhDang).Must(d => new[] { "2D", "3D", "IMAX" }.Contains(d)).WithMessage("Định dạng không hợp lệ.");
+        RuleFor(x => x.DinhDang).Must(d => new[] { "2D", "3D", "IMAX" }.Contains(d)).WithMessage("Định dạng không hợp lệ (Chỉ chấp nhận 2D, 3D, hoặc IMAX).");
         RuleFor(x => x.GiaVeGoc).GreaterThan(0).WithMessage("Giá vé phải lớn hơn 0.");
     }
 }

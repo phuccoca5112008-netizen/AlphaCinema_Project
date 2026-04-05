@@ -1,11 +1,11 @@
 <template>
   <div id="app">
     <!-- Navbar -->
-    <header class="navbar" :class="{ scrolled: isScrolled }">
+    <header class="navbar">
       <div class="container nav-inner">
         <!-- Logo -->
         <router-link to="/" class="logo">
-          ALPHA<span class="logo-accent">CINEMA</span>
+          <img :src="logoImg" alt="Alpha Cinema Logo" class="brand-logo-img">
         </router-link>
 
         <!-- Nav Links -->
@@ -21,7 +21,7 @@
             </div>
           </div>
 
-          <router-link to="/movies">Lịch Chiếu</router-link>
+          <router-link to="/promotions">Ưu Đãi</router-link>
           <router-link to="/booking">Đặt Vé</router-link>
         </nav>
 
@@ -56,12 +56,14 @@
     <footer class="site-footer">
       <div class="container footer-grid text-center-mobile">
         <div class="footer-about">
-          <div class="logo mb-3">ALPHA<span class="logo-accent">CINEMA</span></div>
+          <div class="logo mb-3">
+            <img :src="logoImg" alt="Alpha Cinema Logo" class="brand-logo-img" style="height: 50px;">
+          </div>
           <p class="text-sub">Hệ thống rạp chiếu phim hiện đại với công nghệ IMAX &amp; VIP chuẩn quốc tế.</p>
         </div>
         <div class="footer-links-col">
           <h4 class="footer-heading">Khám Phá</h4>
-          <router-link to="/movies" class="footer-link">Lịch Chiếu</router-link>
+          <router-link to="/promotions" class="footer-link">Ưu Đãi</router-link>
           <router-link to="/booking" class="footer-link">Đặt Vé</router-link>
           <router-link to="/movies?trangThai=Sắp chiếu" class="footer-link">Phim Sắp Chiếu</router-link>
         </div>
@@ -87,14 +89,10 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useRouter } from 'vue-router';
+import logoImg from './assets/logo.png';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const isScrolled = ref(false);
-
-const onScroll = () => { isScrolled.value = window.scrollY > 60; };
-onMounted(() => window.addEventListener('scroll', onScroll));
-onUnmounted(() => window.removeEventListener('scroll', onScroll));
 
 const logout = () => { authStore.logout(); router.push('/'); };
 </script>
@@ -102,18 +100,11 @@ const logout = () => { authStore.logout(); router.push('/'); };
 <style scoped>
 /* ─── Navbar ─── */
 .navbar {
-  position: fixed;
+  position: absolute;
   top: 0; left: 0; width: 100%;
   z-index: 999;
-  padding: 1rem 0;
-  transition: background 0.35s ease, padding 0.3s ease, box-shadow 0.3s ease;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, transparent 100%);
-}
-.navbar.scrolled {
-  background: rgba(13, 13, 13, 0.97);
-  padding: 0.65rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  padding: 1.5rem 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%);
 }
 
 .nav-inner {
@@ -125,14 +116,21 @@ const logout = () => { authStore.logout(); router.push('/'); };
 
 /* Logo */
 .logo {
-  font-size: 1.6rem;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  color: #fff;
+  display: flex;
+  align-items: center;
   text-decoration: none;
   flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
-.logo-accent { color: var(--color-primary); font-weight: 300; }
+.logo:hover { transform: scale(1.05); }
+
+.brand-logo-img {
+  height: 85px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-accent { display: none; }
 
 /* Nav links */
 .nav-links { display: flex; gap: 2rem; }
