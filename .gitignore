@@ -16,8 +16,6 @@ dist-ssr/
 # Environment & Secrets
 .env
 .env.*.local
-appsettings.json
-appsettings.Development.json
 *.db
 *.sqlite
 
