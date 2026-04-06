@@ -82,7 +82,40 @@ public static class DbSeeder
             }
         }
 
-        // 5. Kiểm tra và nạp Khuyến Mãi
+        // 5. Kiểm tra và nạp Vai Trò (Roles)
+        if (!await context.VaiTros.AnyAsync())
+        {
+            var roles = new List<VaiTro>
+            {
+                new VaiTro { MaVaiTro = 1, TenVaiTro = "Admin" },
+                new VaiTro { MaVaiTro = 2, TenVaiTro = "Staff" },
+                new VaiTro { MaVaiTro = 3, TenVaiTro = "Customer" }
+            };
+            await context.VaiTros.AddRangeAsync(roles);
+            await context.SaveChangesAsync();
+        }
+
+        // 6. Kiểm tra và nạp Người Dùng (Users)
+        if (!await context.NguoiDungs.AnyAsync())
+        {
+            var users = new List<NguoiDung>
+            {
+                new NguoiDung { 
+                    MaVaiTro = 1, Email = "admin@alpha.com", 
+                    MatKhau = BCrypt.Net.BCrypt.HashPassword("admin123"), 
+                    HoTen = "Quản Trị Viên Alpha", DiemTichLuy = 1000 
+                },
+                new NguoiDung { 
+                    MaVaiTro = 3, Email = "customer@alpha.com", 
+                    MatKhau = BCrypt.Net.BCrypt.HashPassword("password123"), 
+                    HoTen = "Khách Hàng Mẫu", DiemTichLuy = 0 
+                }
+            };
+            await context.NguoiDungs.AddRangeAsync(users);
+            await context.SaveChangesAsync();
+        }
+
+        // 7. Kiểm tra và nạp Khuyến Mãi
         if (!await context.KhuyenMais.AnyAsync())
         {
             var promos = new List<KhuyenMai>
