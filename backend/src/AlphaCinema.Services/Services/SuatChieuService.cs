@@ -183,7 +183,7 @@ public class SuatChieuService : ISuatChieuService
             sc.MaPhim = request.MaPhim ?? sc.MaPhim;
             sc.ThoiGianBatDau = request.ThoiGianBatDau ?? sc.ThoiGianBatDau;
             sc.DinhDang = request.DinhDang ?? sc.DinhDang;
-            sc.GiaVeGoc = request.GiaVeGoc ?? sc.GiaVeGoc;
+            sc.GiaVeGoc = (decimal)(request.GiaVeGoc ?? sc.GiaVeGoc);
 
             await _context.SaveChangesAsync();
             return (await GetByIdAsync(id))!;

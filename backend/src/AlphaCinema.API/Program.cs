@@ -66,7 +66,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVue", policy =>
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:3000")
+        policy.WithOrigins(
+            "http://localhost:5173", "http://localhost:5174", "http://localhost:3000",
+            "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:3000"
+        )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -123,20 +126,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ===== AUTO MIGRATE & SCHEMA ENFORCEMENT =====
+// ===== ROOT ROUTE (Tránh lỗi 404 khi truy cập http://localhost:5059/) =====
+app.MapGet("/", () => Results.Text("Alpha Cinema API is running. Visit /swagger to see the documentation.", "text/plain", Encoding.UTF8));
+
+// ===== DB MIGRATIONS & SEED DATA =====
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AlphaCinemaDbContext>();
     try {
-        // Force add columns if they don't exist (Fix for 500 errors in history)
-        db.Database.ExecuteSqlRaw(
-            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HoaDon') AND name = 'ma_vao_cong') ALTER TABLE HoaDon ADD ma_vao_cong NVARCHAR(50); " +
-            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('HoaDon') AND name = 'trang_thai') ALTER TABLE HoaDon ADD trang_thai NVARCHAR(50); " +
-            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Ve') AND name = 'trang_thai') ALTER TABLE Ve ADD trang_thai NVARCHAR(50); " +
-            "IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('PhongChieu') AND name = 'LoaiPhong') ALTER TABLE PhongChieu ADD LoaiPhong NVARCHAR(MAX) NOT NULL DEFAULT '2D'; "
-        );
+        await db.Database.MigrateAsync(); // Create DB and tables from Migrations
+        await DbSeeder.SeedAsync(db);    // Seed default data if empty
     } catch (Exception ex) { 
-        Console.WriteLine($"[DB Warning] Could not enforce schema updates automatically: {ex.Message}");
+        Console.WriteLine($"[DB Error] Auto setup failed: {ex.Message}");
     }
 }
 
