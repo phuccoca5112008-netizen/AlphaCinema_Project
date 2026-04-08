@@ -18,6 +18,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Full_System_Seed.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AlphaCinema.Core\AlphaCinema.Core.csproj" />
     <ProjectReference Include="..\AlphaCinema.Services\AlphaCinema.Services.csproj" />
     <ProjectReference Include="..\AlphaCinema.Infrastructure\AlphaCinema.Infrastructure.csproj" />

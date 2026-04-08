@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 
 namespace AlphaCinema.Infrastructure.Data;
@@ -9,51 +10,59 @@ public static class DbSeeder
         // 1. Đảm bảo Database đã được tạo
         await context.Database.EnsureCreatedAsync();
 
-        // 2. Kiểm tra xem đã có dữ liệu chưa (kiểm tra bảng Phim)
-        if (await context.Phims.AnyAsync())
+        // 2. Kiểm tra xem đã có dữ liệu chưa (kiểm tra tài khoản Admin)
+        var hasAdmin = await context.NguoiDungs.AnyAsync(u => u.Email == "admin@alpha.com");
+        
+        if (!hasAdmin)
         {
-            return;
-        }
-
-        try
-        {
-            // 3. Tìm đường dẫn file SQL (đã được copy vào thư mục API)
-            var sqlFilePath = Path.Combine(AppContext.BaseDirectory, "Full_System_Seed.sql");
-            
-            // Nếu không tìm thấy ở bin, thử tìm ở source
-            if (!File.Exists(sqlFilePath))
+            try
             {
-                sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Full_System_Seed.sql");
-            }
-
-            if (File.Exists(sqlFilePath))
-            {
-                var sql = await File.ReadAllTextAsync(sqlFilePath);
-                var sqlCommands = sql.Split(new[] { "GO", "go", "Go", "gO" }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var command in sqlCommands)
+                // 3. Tìm đường dẫn file SQL (đã được copy vào thư mục API)
+                var sqlFilePath = Path.Combine(AppContext.BaseDirectory, "Full_System_Seed.sql");
+                
+                // Nếu không tìm thấy ở bin, thử tìm ở source (trong trường hợp chạy dotnet run)
+                if (!File.Exists(sqlFilePath))
                 {
-                    if (!string.IsNullOrWhiteSpace(command))
+                    sqlFilePath = Path.Combine(Directory.GetCurrentDirectory(), "Full_System_Seed.sql");
+                }
+
+                if (File.Exists(sqlFilePath))
+                {
+                    // Đọc file với Encoding.UTF8 để tránh lỗi font chữ tiếng Việt
+                    var sql = await File.ReadAllTextAsync(sqlFilePath, Encoding.UTF8);
+                    
+                    // Tách các lệnh GO để thực thi từng phần
+                    var sqlCommands = sql.Split(new[] { "GO", "go", "Go", "gO" }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var command in sqlCommands)
                     {
-                        var cleanCommand = command.Replace("USE AlphaCinema;", "").Replace("use AlphaCinema;", "");
-                        await context.Database.ExecuteSqlRawAsync(cleanCommand);
+                        if (!string.IsNullOrWhiteSpace(command))
+                        {
+                            var cleanCommand = command.Replace("USE AlphaCinema;", "").Replace("use AlphaCinema;", "");
+                            await context.Database.ExecuteSqlRawAsync(cleanCommand);
+                        }
                     }
+                    Console.WriteLine("[Seeder] Database structure and seed data applied successfully.");
                 }
-
-                // 4. FIX MẬT KHẨU ADMIN SANG BCrypt (Để bạn mình đăng nhập được ngay)
-                var admin = await context.NguoiDungs.FirstOrDefaultAsync(u => u.Email == "admin@alpha.com");
-                if (admin != null)
+                else
                 {
-                    admin.MatKhau = BCrypt.Net.BCrypt.HashPassword("admin123");
-                    await context.SaveChangesAsync();
+                    Console.WriteLine("[Warning] Seed SQL file not found at: " + sqlFilePath);
                 }
-
-                Console.WriteLine("[Success] 100% Data fidelity maintained & Admin login fixed.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Error] Seeding process failed: " + ex.Message);
             }
         }
-        catch (Exception ex)
+
+        // 4. LUÔN LUÔN đảm bảo mật khẩu Admin là 'admin123' với Hash BCrypt mới nhất
+        // Điều này khắc phục lỗi 'không đăng nhập được' khi copy giữa các máy khác nhau
+        var admin = await context.NguoiDungs.FirstOrDefaultAsync(u => u.Email == "admin@alpha.com");
+        if (admin != null)
         {
-            Console.WriteLine("[Error] Seeding failed: " + ex.Message);
+            admin.MatKhau = BCrypt.Net.BCrypt.HashPassword("admin123");
+            await context.SaveChangesAsync();
+            Console.WriteLine("[System] Admin verified: admin@alpha.com / admin123");
         }
     }
 }

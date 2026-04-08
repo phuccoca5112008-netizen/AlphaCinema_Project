@@ -1,0 +1,9 @@
+# Force UTF-8 for source files to avoid encoding issues on different systems
+*.cs text eol=crlf working-tree-encoding=UTF-8
+*.sql text eol=crlf working-tree-encoding=UTF-8
+*.json text eol=crlf working-tree-encoding=UTF-8
+*.vue text eol=crlf working-tree-encoding=UTF-8
+*.js text eol=crlf working-tree-encoding=UTF-8
+*.css text eol=crlf working-tree-encoding=UTF-8
+*.md text eol=crlf working-tree-encoding=UTF-8
+*.bat text eol=crlf
