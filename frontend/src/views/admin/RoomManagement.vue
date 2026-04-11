@@ -16,7 +16,7 @@
         v-for="fmt in formats" 
         :key="fmt.id" 
         class="format-tab-card glass-panel"
-        :class="[fmt.id.toLowerCase(), { active: selectedFormat === fmt.id }]"
+        :class="['format-' + fmt.id.toLowerCase(), { active: selectedFormat === fmt.id }]"
         @click="selectedFormat = fmt.id"
       >
         <div class="fmt-icon">
@@ -95,7 +95,7 @@
 
       <!-- Cột Phải: Trình Thiết Kế Sơ Đồ -->
       <main class="builder-area">
-        <div v-if="selectedRoom" class="builder-container glass-panel" :class="selectedFormat.toLowerCase() + '-theme'">
+        <div v-if="selectedRoom" class="builder-container glass-panel" :class="'theme-' + selectedFormat.toLowerCase()">
           <div class="builder-header">
             <div class="room-identity">
               <span class="format-label">{{ selectedFormat }}</span>
@@ -407,11 +407,11 @@ onMounted(() => {
 }
 .format-tab-card.active .fmt-icon { background: var(--color-primary); color: white; transform: rotate(10deg); }
 
-.format-tab-card.imax.active { border-color: #00cec9; box-shadow: 0 10px 30px rgba(0, 206, 201, 0.15); }
-.format-tab-card.imax.active .fmt-icon { background: #00cec9; }
+.format-tab-card.format-imax.active { border-color: #00cec9; box-shadow: 0 10px 30px rgba(0, 206, 201, 0.15); }
+.format-tab-card.format-imax.active .fmt-icon { background: #00cec9; }
 
-.format-tab-card.3d.active { border-color: #a29bfe; box-shadow: 0 10px 30px rgba(162, 155, 254, 0.15); }
-.format-tab-card.3d.active .fmt-icon { background: #a29bfe; }
+.format-tab-card.format-3d.active { border-color: #a29bfe; box-shadow: 0 10px 30px rgba(162, 155, 254, 0.15); }
+.format-tab-card.format-3d.active .fmt-icon { background: #a29bfe; }
 
 .fmt-info h3 { font-size: 1.1rem; margin: 0; font-weight: 800; }
 .price-tag { font-size: 0.75rem; color: var(--color-text-sub); opacity: 0.7; }
@@ -460,10 +460,10 @@ onMounted(() => {
 .btn-sm { padding: 4px 12px; font-size: 0.8rem; }
 
 /* Themes */
-.imax-theme .format-label { background: #00cec9; }
-.imax-theme h2 { filter: drop-shadow(0 0 10px rgba(0, 206, 201, 0.3)); }
-.3d-theme .format-label { background: #a29bfe; }
-.3d-theme h2 { filter: drop-shadow(0 0 10px rgba(162, 155, 254, 0.3)); }
+.theme-imax .format-label { background: #00cec9; }
+.theme-imax h2 { filter: drop-shadow(0 0 10px rgba(0, 206, 201, 0.3)); }
+.theme-3d .format-label { background: #a29bfe; }
+.theme-3d h2 { filter: drop-shadow(0 0 10px rgba(162, 155, 254, 0.3)); }
 
 .config-stats-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
 .config-panel h4 { margin: 0; font-size: 1rem; font-weight: 800; color: var(--color-text-sub); }
@@ -493,8 +493,8 @@ onMounted(() => {
   background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
   box-shadow: 0 -15px 40px rgba(255,255,255,0.3);
 }
-.imax-theme .screen-glow { background: linear-gradient(to bottom, #00cec9, transparent); box-shadow: 0 -15px 40px rgba(0, 206, 201, 0.4); }
-.3d-theme .screen-glow { background: linear-gradient(to bottom, #a29bfe, transparent); box-shadow: 0 -15px 40px rgba(162, 155, 254, 0.4); }
+.theme-imax .screen-glow { background: linear-gradient(to bottom, #00cec9, transparent); box-shadow: 0 -15px 40px rgba(0, 206, 201, 0.4); }
+.theme-3d .screen-glow { background: linear-gradient(to bottom, #a29bfe, transparent); box-shadow: 0 -15px 40px rgba(162, 155, 254, 0.4); }
 
 .screen-label { text-align: center; margin-top: 10px; font-size: 0.75rem; letter-spacing: 6px; font-weight: 800; color: var(--color-text-muted); }
 

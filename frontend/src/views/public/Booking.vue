@@ -765,6 +765,7 @@ const totalAfterDiscount = computed(() => Math.max(0, subtotal.value - discount.
 const applyPromo = async () => {
   if (!promoCode.value) return;
   if (subtotal.value === 0) { promoMsg.value = 'Vui lòng chọn ghế trước!'; return; }
+  try {
     const res = await promotionApi.applyPromo(promoCode.value, subtotal.value);
     if (res.success) {
       discount.value  = res.data.tienGiam;

@@ -11,7 +11,7 @@ public static class DbSeeder
         await context.Database.EnsureCreatedAsync();
 
         // 2. Kiểm tra xem đã có dữ liệu phim hoàn thiện nhất chưa
-        var isWickedFixed = await context.Phims.AnyAsync(p => p.TenPhim.Contains("Wicked") && p.Poster.Contains("j5AVKd"));
+        var isWickedFixed = await context.Phims.AnyAsync(p => p.TenPhim != null && p.TenPhim.Contains("Wicked") && p.Poster != null && p.Poster.Contains("j5AVKd"));
         
         if (!isWickedFixed)
         {

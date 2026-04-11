@@ -26,23 +26,25 @@ public class AuthService : IAuthService
         if (await _context.NguoiDungs.AnyAsync(u => u.Email == request.Email))
             throw new ArgumentException("Tài khoản hoặc Email này đã được sử dụng.");
 
-        // Mặc định vai trò Customer (3)
+        // Lấy vai trò Customer từ DB để tránh lỗi Hardcode ID
+        var vaiTro = await _context.VaiTros.FirstOrDefaultAsync(v => v.TenVaiTro == "Customer")
+            ?? throw new Exception("Hệ thống chưa thiết lập vai trò 'Customer'. Vui lòng liên hệ Admin.");
+
         var nguoiDung = new Core.Entities.NguoiDung
         {
             Email = request.Email,
             MatKhau = BCrypt.Net.BCrypt.HashPassword(request.MatKhau),
             HoTen = request.HoTen,
-            MaVaiTro = 3,
+            MaVaiTro = vaiTro.MaVaiTro,
             DiemTichLuy = 0
         };
 
         _context.NguoiDungs.Add(nguoiDung);
         await _context.SaveChangesAsync();
 
-        var vaiTro = await _context.VaiTros.FindAsync(nguoiDung.MaVaiTro);
         return new AuthResponse
         {
-            Token = GenerateJwt(nguoiDung, vaiTro!.TenVaiTro),
+            Token = GenerateJwt(nguoiDung, vaiTro.TenVaiTro),
             Email = nguoiDung.Email,
             HoTen = nguoiDung.HoTen,
             VaiTro = vaiTro.TenVaiTro,

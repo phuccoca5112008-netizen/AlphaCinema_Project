@@ -138,7 +138,7 @@ public class DatVeService : IDatVeService
             var innerMsg = dbEx.InnerException?.Message ?? dbEx.Message;
             throw new Exception($"Lỗi Database: {innerMsg}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             await transaction.RollbackAsync();
             throw;
@@ -324,7 +324,7 @@ public class DatVeService : IDatVeService
             var innerMsg = dbEx.InnerException?.Message ?? dbEx.Message;
             throw new Exception($"Lỗi Database: {innerMsg}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             await transaction.RollbackAsync();
             throw;
