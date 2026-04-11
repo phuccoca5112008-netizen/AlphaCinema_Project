@@ -178,7 +178,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import api from '../../api/axios';
+import { bookingApi } from '../../api/bookingApi';
 import { Html5Qrcode } from "html5-qrcode";
 
 const ticketCode = ref('');
@@ -294,7 +294,7 @@ const handleCheck = async () => {
   success.value = false;
 
   try {
-    const res = await api.post('/dat-ve/check-in', { code: ticketCode.value });
+    const res = await bookingApi.checkIn(ticketCode.value);
     if (res.success) {
       result.value = res.data;
       message.value = res.message;

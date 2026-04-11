@@ -221,7 +221,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import api from '../../api/axios';
+import { adminApi } from '../../api/adminApi';
 
 const rooms = ref([]);
 const selectedRoom = ref(null);
@@ -260,7 +260,7 @@ const standardCount = computed(() => selectedRoom.value?.ghes?.filter(g => g.loa
 
 const loadRooms = async () => {
   try {
-    const res = await api.get('/phong-chieu');
+    const res = await adminApi.getRooms();
     if (res.success) {
       rooms.value = res.data;
     }
@@ -269,7 +269,7 @@ const loadRooms = async () => {
 
 const selectRoom = async (id) => {
   try {
-    const res = await api.get(`/phong-chieu/${id}`);
+    const res = await adminApi.getRoomDetail(id);
     if (res.success) {
       selectedRoom.value = res.data;
       isEditingName.value = false;
@@ -285,7 +285,7 @@ const startEditName = () => {
 const saveRoomName = async () => {
   if (!editingName.value) return;
   try {
-    const res = await api.put(`/phong-chieu/${selectedRoom.value.maPhong}`, { 
+    const res = await adminApi.updateRoom(selectedRoom.value.maPhong, { 
       tenPhong: editingName.value,
       loaiPhong: selectedRoom.value.loaiPhong 
     });
@@ -300,7 +300,7 @@ const saveRoomName = async () => {
 const handleCreateRoom = async () => {
   if (!newRoomName.value) return;
   try {
-    const res = await api.post('/phong-chieu', { 
+    const res = await adminApi.createRoom({ 
       tenPhong: newRoomName.value,
       loaiPhong: newRoomType.value 
     });
@@ -317,7 +317,7 @@ const handleCreateRoom = async () => {
 const deleteRoom = async (id) => {
   if (!confirm('Bạn có chắc muốn xóa phòng chiếu này?')) return;
   try {
-    const res = await api.delete(`/phong-chieu/${id}`);
+    const res = await adminApi.deleteRoom(id);
     if (res.success) {
       selectedRoom.value = null;
       loadRooms();

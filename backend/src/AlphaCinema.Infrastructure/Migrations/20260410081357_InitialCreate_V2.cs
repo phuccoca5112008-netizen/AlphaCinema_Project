@@ -8,11 +8,28 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AlphaCinema.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreate_V2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "DoAnVat",
+                columns: table => new
+                {
+                    ma_do_an_vat = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ten_mon = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    mo_ta = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    gia = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    hinh_anh = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    loai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoAnVat", x => x.ma_do_an_vat);
+                });
+
             migrationBuilder.CreateTable(
                 name: "KhuyenMai",
                 columns: table => new
@@ -27,7 +44,9 @@ namespace AlphaCinema.Infrastructure.Migrations
                     loai_giam_gia = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     gia_tri_giam = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     giam_toi_da = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    don_hang_toi_thieu = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                    don_hang_toi_thieu = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    hinh_anh = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    phan_loai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -58,7 +77,8 @@ namespace AlphaCinema.Infrastructure.Migrations
                 {
                     ma_phong = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    ten_phong = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    ten_phong = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    loai_phong = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -191,7 +211,9 @@ namespace AlphaCinema.Infrastructure.Migrations
                     ma_nguoi_dung = table.Column<int>(type: "int", nullable: false),
                     tong_tien = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     phuong_thuc_thanh_toan = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ngay_giao_dich = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()")
+                    ngay_giao_dich = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
+                    ma_vao_cong = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    trang_thai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Đã thanh toán")
                 },
                 constraints: table =>
                 {
@@ -211,6 +233,34 @@ namespace AlphaCinema.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "HoaDonDoAnVat",
+                columns: table => new
+                {
+                    ma_hoa_don_do_an_vat = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ma_hoa_don = table.Column<int>(type: "int", nullable: false),
+                    ma_do_an_vat = table.Column<int>(type: "int", nullable: false),
+                    so_luong = table.Column<int>(type: "int", nullable: false),
+                    don_gia = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_HoaDonDoAnVat", x => x.ma_hoa_don_do_an_vat);
+                    table.ForeignKey(
+                        name: "FK_HoaDonDoAnVat_DoAnVat_ma_do_an_vat",
+                        column: x => x.ma_do_an_vat,
+                        principalTable: "DoAnVat",
+                        principalColumn: "ma_do_an_vat",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_HoaDonDoAnVat_HoaDon_ma_hoa_don",
+                        column: x => x.ma_hoa_don,
+                        principalTable: "HoaDon",
+                        principalColumn: "ma_hoa_don",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Ve",
                 columns: table => new
                 {
@@ -220,6 +270,7 @@ namespace AlphaCinema.Infrastructure.Migrations
                     ma_ghe = table.Column<int>(type: "int", nullable: false),
                     ma_suat_chieu = table.Column<int>(type: "int", nullable: false),
                     ma_qr = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    ma_vao_cong = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     trang_thai = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     gia_ve = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
@@ -244,6 +295,24 @@ namespace AlphaCinema.Infrastructure.Migrations
                         principalTable: "SuatChieu",
                         principalColumn: "ma_suat_chieu",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.InsertData(
+                table: "DoAnVat",
+                columns: new[] { "ma_do_an_vat", "gia", "hinh_anh", "loai", "mo_ta", "ten_mon" },
+                values: new object[,]
+                {
+                    { 1, 45000m, "/assets/concessions/bap_caramel_m.png", "Bắp", "Bắp rang vị caramel thơm ngọt size vừa", "Bắp Rang Ngọt Caramel (M)" },
+                    { 2, 55000m, "/assets/concessions/bap_caramel_m.png", "Bắp", "Bắp rang vị caramel thơm ngọt size lớn", "Bắp Rang Ngọt Caramel (L)" },
+                    { 3, 45000m, "/assets/concessions/bap_phomai_l.png", "Bắp", "Bắp rang vị phô mai mặn mà size vừa", "Bắp Rang Phô Mai (M)" },
+                    { 4, 55000m, "/assets/concessions/bap_phomai_l.png", "Bắp", "Bắp rang vị phô mai mặn mà size lớn", "Bắp Rang Phô Mai (L)" },
+                    { 5, 35000m, "/assets/concessions/coca_l.png", "Nước", "Nước ngọt Coca Cola mát lạnh size lớn", "Coca Cola (L)" },
+                    { 6, 35000m, "/assets/concessions/coca_l.png", "Nước", "Nước ngọt Pepsi mát lạnh size lớn", "Pepsi (L)" },
+                    { 7, 45000m, "/assets/concessions/cam_tuoi.png", "Nước", "Nước cam ép nguyên chất giàu vitamin", "Nước Cam Tươi" },
+                    { 8, 50000m, "/assets/concessions/milo_trachanh.png", "Nước", "Thức uống sáng tạo kết hợp Milo và Trà xanh", "Milo Trà Xanh Đậu Đen" },
+                    { 9, 75000m, "/assets/concessions/pizza_mini.png", "Thức ăn", "Pizza cỡ nhỏ phủ xúc xích và phô mai", "Pizza Xúc Xích Mini" },
+                    { 10, 75000m, "/assets/concessions/combo_single.png", "Combo", "1 Bắp (M) + 1 Nước (L) - Tiết kiệm hơn", "Combo Single Alpha" },
+                    { 11, 115000m, "/assets/concessions/combo_couple.png", "Combo", "1 Bắp (L) + 2 Nước (L) - Cho cặp đôi", "Combo Couple Alpha" }
                 });
 
             migrationBuilder.InsertData(
@@ -282,6 +351,16 @@ namespace AlphaCinema.Infrastructure.Migrations
                 column: "ma_nguoi_dung");
 
             migrationBuilder.CreateIndex(
+                name: "IX_HoaDonDoAnVat_ma_do_an_vat",
+                table: "HoaDonDoAnVat",
+                column: "ma_do_an_vat");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_HoaDonDoAnVat_ma_hoa_don",
+                table: "HoaDonDoAnVat",
+                column: "ma_hoa_don");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_NguoiDung_email",
                 table: "NguoiDung",
                 column: "email",
@@ -316,7 +395,8 @@ namespace AlphaCinema.Infrastructure.Migrations
                 name: "IX_Ve_ma_suat_chieu_ma_ghe",
                 table: "Ve",
                 columns: new[] { "ma_suat_chieu", "ma_ghe" },
-                unique: true);
+                unique: true,
+                filter: "[trang_thai] <> N'Đã hủy'");
         }
 
         /// <inheritdoc />
@@ -326,7 +406,13 @@ namespace AlphaCinema.Infrastructure.Migrations
                 name: "DanhGia");
 
             migrationBuilder.DropTable(
+                name: "HoaDonDoAnVat");
+
+            migrationBuilder.DropTable(
                 name: "Ve");
+
+            migrationBuilder.DropTable(
+                name: "DoAnVat");
 
             migrationBuilder.DropTable(
                 name: "Ghe");

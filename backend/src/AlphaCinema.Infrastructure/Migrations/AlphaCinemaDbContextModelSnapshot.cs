@@ -351,7 +351,9 @@ namespace AlphaCinema.Infrastructure.Migrations
                         .HasColumnName("giam_toi_da");
 
                     b.Property<string>("HinhAnh")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("hinh_anh");
 
                     b.Property<string>("LoaiGiamGia")
                         .IsRequired()
@@ -378,7 +380,9 @@ namespace AlphaCinema.Infrastructure.Migrations
                         .HasColumnName("ngay_ket_thuc");
 
                     b.Property<string>("PhanLoai")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("phan_loai");
 
                     b.Property<string>("TenKhuyenMai")
                         .IsRequired()

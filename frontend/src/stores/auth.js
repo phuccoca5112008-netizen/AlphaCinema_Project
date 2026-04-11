@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import api from '../api/axios';
+import { authApi } from '../api/authApi';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -15,7 +15,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email, password) {
       try {
-        const response = await api.post('/auth/login', { email, matKhau: password });
+        const response = await authApi.login(email, password);
         if (response.success) {
           const data = response.data;
           this.token = data.token;
@@ -35,7 +35,7 @@ export const useAuthStore = defineStore('auth', {
     },
     async register(name, email, password) {
       try {
-        const response = await api.post('/auth/register', { hoTen: name, email, matKhau: password });
+        const response = await authApi.register(name, email, password);
         if (response.success) {
           const data = response.data;
           this.token = data.token;
@@ -61,3 +61,4 @@ export const useAuthStore = defineStore('auth', {
     }
   }
 });
+

@@ -1,0 +1,25 @@
+<svg width="200" height="100" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient for Gold -->
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#DAA520;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Stylized A -->
+  <path d="M40 80L55 35H65L80 80H70L67 70H53L50 80H40ZM60 45L55 62H65L60 45Z" fill="url(#goldGradient)" />
+  
+  <!-- Swoosh/Star path similar to user's image -->
+  <path d="M40 65C50 65 65 60 85 45" stroke="url(#goldGradient)" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Star -->
+  <path d="M60 25L63 32H70L64 36L66 43L60 39L54 43L56 36L50 32H57L60 25Z" fill="url(#goldGradient)" />
+
+  <!-- Text: ALPHA -->
+  <text x="90" y="55" font-family="Arial, sans-serif" font-weight="900" font-size="24" fill="url(#goldGradient)" letter-spacing="1">ALPHA</text>
+  
+  <!-- Text: CINEMA -->
+  <text x="90" y="80" font-family="Arial, sans-serif" font-weight="900" font-size="24" fill="url(#goldGradient)" letter-spacing="1">CINEMA</text>
+</svg>

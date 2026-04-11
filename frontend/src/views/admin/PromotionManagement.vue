@@ -42,7 +42,7 @@
         </div>
 
         <div class="promo-poster-mini" v-if="km.hinhAnh">
-          <img :src="km.hinhAnh" alt="Promo Poster" />
+          <img :src="getImageUrl(km.hinhAnh)" alt="Promo Poster" />
         </div>
 
         <div class="promo-card-body">
@@ -167,7 +167,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '../../api/axios';
+import { promotionApi } from '../../api/promotionApi';
 
 const promotions = ref([]);
 const loading = ref(true);
@@ -175,9 +175,17 @@ const showModal = ref(false);
 const isEdit = ref(false);
 const form = ref({});
 
+const getImageUrl = (name) => {
+  if (!name) return 'https://placehold.co/800x400/1a1a1a/E8882A?text=Alpha+Cinema';
+  // Nếu là link web thì trả về luôn
+  if (name.startsWith('http')) return name;
+  // Nếu là file local thì map vào thư mục assets
+  return new URL(`../../assets/promotions/${name}`, import.meta.url).href;
+};
+
 const loadPromotions = async () => {
   try {
-    const res = await api.get('/khuyen-mai');
+    const res = await promotionApi.getPromotions();
     if (res.success) {
       promotions.value = res.data;
     }
@@ -219,9 +227,9 @@ const savePromotion = async () => {
   try {
     let res;
     if (isEdit.value) {
-      res = await api.put(`/khuyen-mai/${form.value.maKhuyenMai}`, form.value);
+      res = await promotionApi.updatePromotion(form.value.maKhuyenMai, form.value);
     } else {
-      res = await api.post('/khuyen-mai', form.value);
+      res = await promotionApi.createPromotion(form.value);
     }
     
     if (res.success) {
@@ -236,7 +244,7 @@ const savePromotion = async () => {
 const deletePromotion = async (id) => {
   if (!confirm('Bạn có chắc chắn muốn xóa mã này?')) return;
   try {
-    const res = await api.delete(`/khuyen-mai/${id}`);
+    const res = await promotionApi.deletePromotion(id);
     if (res.success) {
       loadPromotions();
     }

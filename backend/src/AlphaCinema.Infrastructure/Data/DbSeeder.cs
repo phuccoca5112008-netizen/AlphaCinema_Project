@@ -10,10 +10,10 @@ public static class DbSeeder
         // 1. Đảm bảo Database đã được tạo
         await context.Database.EnsureCreatedAsync();
 
-        // 2. Kiểm tra xem đã có dữ liệu chưa (kiểm tra tài khoản Admin)
-        var hasAdmin = await context.NguoiDungs.AnyAsync(u => u.Email == "admin@alpha.com");
+        // 2. Kiểm tra xem đã có dữ liệu phim hoàn thiện nhất chưa
+        var isWickedFixed = await context.Phims.AnyAsync(p => p.TenPhim.Contains("Wicked") && p.Poster.Contains("j5AVKd"));
         
-        if (!hasAdmin)
+        if (!isWickedFixed)
         {
             try
             {
@@ -32,7 +32,8 @@ public static class DbSeeder
                     var sql = await File.ReadAllTextAsync(sqlFilePath, Encoding.UTF8);
                     
                     // Tách các lệnh GO để thực thi từng phần
-                    var sqlCommands = sql.Split(new[] { "GO", "go", "Go", "gO" }, StringSplitOptions.RemoveEmptyEntries);
+                    // Dùng cách thủ công để đảm bảo không bị tách nhầm từ "ngon" trong tiếng Việt
+                    var sqlCommands = sql.Split(new[] { "\r\nGO\r\n", "\r\ngo\r\n", "\nGO\n", "\ngo\n", "\rGO\r", "\rgo\r" }, StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var command in sqlCommands)
                     {
@@ -55,14 +56,17 @@ public static class DbSeeder
             }
         }
 
-        // 4. LUÔN LUÔN đảm bảo mật khẩu Admin là 'admin123' với Hash BCrypt mới nhất
-        // Điều này khắc phục lỗi 'không đăng nhập được' khi copy giữa các máy khác nhau
-        var admin = await context.NguoiDungs.FirstOrDefaultAsync(u => u.Email == "admin@alpha.com");
-        if (admin != null)
+        // 4. Đảm bảo mật khẩu tất cả tài khoản seed là 'admin123' với Hash BCrypt mới nhất
+        var emails = new[] { "admin@alpha.com", "staff@alpha.com", "customer@alpha.com" };
+        foreach (var email in emails)
         {
-            admin.MatKhau = BCrypt.Net.BCrypt.HashPassword("admin123");
-            await context.SaveChangesAsync();
-            Console.WriteLine("[System] Admin verified: admin@alpha.com / admin123");
+            var user = await context.NguoiDungs.FirstOrDefaultAsync(u => u.Email == email);
+            if (user != null)
+            {
+                user.MatKhau = BCrypt.Net.BCrypt.HashPassword("admin123");
+            }
         }
+        await context.SaveChangesAsync();
+        Console.WriteLine("[System] Accounts verified: admin, staff, customer / admin123");
     }
 }

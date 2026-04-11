@@ -192,7 +192,9 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
+import { adminApi } from '../../api/adminApi';
+import { bookingApi } from '../../api/bookingApi';
 
 // --- UTILS ---
 const padStr = (n) => (n < 10 ? '0' + n : n);
@@ -236,23 +238,22 @@ onMounted(async () => {
 
 // --- API ACTIONS ---
 async function fetchPhims() {
-  const res = await api.get('/phim');
+  const res = await movieApi.getMovies();
   if (res.success) phims.value = res.data;
 }
 
 async function fetchRooms() {
-  const res = await api.get('/phong-chieu');
+  const res = await adminApi.getRooms();
   if (res.success) rooms.value = res.data;
 }
 
 async function fetchShowtimes() {
   loading.value = true;
   try {
-    const params = new URLSearchParams();
-    if (filterPhim.value) params.append('maPhim', filterPhim.value);
-    if (selectedDate.value) params.append('ngay', selectedDate.value);
-    
-    const res = await api.get(`/suat-chieu?${params.toString()}`);
+    const res = await bookingApi.getShowtimes({
+      maPhim: filterPhim.value,
+      ngay: selectedDate.value
+    });
     if (res.success) showtimes.value = res.data;
   } finally {
     loading.value = false;
@@ -355,9 +356,9 @@ const saveShowtime = async () => {
     };
 
     if (isEdit.value) {
-      await api.put(`/suat-chieu/${formData.value.maSuatChieu}`, payload);
+      await bookingApi.updateShowtime(formData.value.maSuatChieu, payload);
     } else {
-      await api.post('/suat-chieu', payload);
+      await bookingApi.createShowtime(payload);
     }
     
     showModal.value = false;
@@ -372,7 +373,7 @@ const saveShowtime = async () => {
 const deleteShowtime = async (id) => {
   if (!confirm("Hành động này sẽ hủy suất chiếu và toàn bộ vé. Bạn chắc chắn?")) return;
   try {
-    await api.delete(`/suat-chieu/${id}`);
+    await bookingApi.deleteShowtime(id);
     await fetchShowtimes();
   } catch (e) {
     alert("Không thể xóa suất chiếu này (đã có vé được đặt thành công).");

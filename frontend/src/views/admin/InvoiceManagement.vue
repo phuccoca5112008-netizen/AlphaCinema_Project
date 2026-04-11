@@ -63,7 +63,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import api from '../../api/axios';
+import { bookingApi } from '../../api/bookingApi';
 
 const invoices = ref([]);
 const loading = ref(true);
@@ -74,7 +74,7 @@ const totalRevenue = computed(() => {
 
 const loadInvoices = async () => {
   try {
-    const res = await api.get('/hoa-don');
+    const res = await bookingApi.getInvoices();
     if (res.success) {
       // Sort newest first
       invoices.value = res.data.sort((a,b) => new Date(b.ngayLap) - new Date(a.ngayLap));

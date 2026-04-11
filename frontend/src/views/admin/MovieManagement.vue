@@ -98,7 +98,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
 
 const phims = ref([]);
 const loading = ref(true);
@@ -112,7 +112,7 @@ const formData = ref({});
 const fetchPhims = async () => {
   loading.value = true;
   try {
-    const res = await api.get('/phim');
+    const res = await movieApi.getMovies();
     if (res.success) phims.value = res.data;
   } catch (error) {
     console.error(error);
@@ -144,9 +144,9 @@ const savePhim = async () => {
   saving.value = true;
   try {
     if (isEdit.value) {
-      await api.put(`/phim/${formData.value.maPhim}`, formData.value);
+      await movieApi.updateMovie(formData.value.maPhim, formData.value);
     } else {
-      await api.post('/phim', formData.value);
+      await movieApi.createMovie(formData.value);
     }
     showModal.value = false;
     await fetchPhims(); // Refresh list
@@ -160,7 +160,7 @@ const savePhim = async () => {
 const deletePhim = async (id) => {
   if (confirm("Bạn có chắc chắn muốn xóa phim này? Mọi suất chiếu liên quan cũng sẽ bị ảnh hưởng.")) {
     try {
-      await api.delete(`/phim/${id}`);
+      await movieApi.deleteMovie(id);
       await fetchPhims();
     } catch(e) {
       alert("Lỗi khi xóa phim.");
@@ -172,7 +172,7 @@ const seedData = async () => {
   if (confirm("Bạn có muốn tự động lấy dữ liệu từ hệ thống API TMDb và tạo sẵn phòng chiếu, suất chiếu mẫu không?")) {
     seeding.value = true;
     try {
-      const res = await api.post('/phim/seed');
+      const res = await movieApi.seedMovies();
       if (res.success) {
         alert("Đồng bộ hoàn tất! Dữ liệu đã được nạp vào hệ thống.");
         await fetchPhims();

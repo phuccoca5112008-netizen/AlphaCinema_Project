@@ -52,14 +52,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
 
 const reviews = ref([]);
 const loading = ref(true);
 
 const loadReviews = async () => {
   try {
-    const res = await api.get('/danh-gia');
+    const res = await movieApi.getReviews();
     if (res.success) {
       reviews.value = res.data;
     }
@@ -73,7 +73,7 @@ const loadReviews = async () => {
 const deleteReview = async (id) => {
   if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
   try {
-    const res = await api.delete(`/danh-gia/${id}`);
+    const res = await movieApi.deleteReview(id);
     if (res.success) {
       alert('Đã xóa đánh giá thành công');
       loadReviews();

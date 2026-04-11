@@ -524,7 +524,9 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
+import { bookingApi } from '../../api/bookingApi';
+import { promotionApi } from '../../api/promotionApi';
 import SeatPicker from '../../components/public/SeatPicker.vue';
 import QrcodeVue from 'qrcode.vue';
 
@@ -585,10 +587,7 @@ const handleSeatConfirmation = async () => {
     
     booking.value = true;
     try {
-        const res = await api.post('/dat-ve/lock', {
-            maSuatChieu: selectedSuat.value.maSuatChieu,
-            maGheIds: pickedIds.value
-        });
+        const res = await bookingApi.lockSeats(selectedSuat.value.maSuatChieu, pickedIds.value);
         if (res.success) {
             pendingHoaDonId.value = res.data.maHoaDon;
             step.value = 2.5; // Ir a la selección de bắp nước
@@ -597,7 +596,7 @@ const handleSeatConfirmation = async () => {
     } catch (e) {
         alert(e.message || 'Ghế đã có người chọn trước đó, vui lòng chọn ghế khác!');
         // Refresh seats
-        const resGhe = await api.get(`/suat-chieu/${selectedSuat.value.maSuatChieu}/ghe`);
+        const resGhe = await bookingApi.getShowtimeSeats(selectedSuat.value.maSuatChieu);
         if (resGhe.success) ghes.value = resGhe.data;
     } finally {
         booking.value = false;
@@ -623,7 +622,7 @@ onMounted(async () => {
   if (!auth.isAuthenticated) return;
   selectedDate.value = dateOptions.value[0].val;
   try {
-    const res = await api.get('/phim');
+    const res = await movieApi.getMovies();
     if (res.success) allPhims.value = res.data.filter(p => p.trangThaiPhim === 'Đang chiếu');
   } catch(e){ console.error(e); }
   finally { loadingPhims.value = false; }
@@ -650,7 +649,7 @@ const selectPhim = async (p) => {
   allSuats.value     = [];
   loadingSuat.value  = true;
   try {
-    const res = await api.get(`/suat-chieu?maPhim=${p.maPhim}`);
+    const res = await bookingApi.getShowtimes({ maPhim: p.maPhim });
     if (res.success) allSuats.value = res.data;
   } catch(e){ console.error(e); }
   finally { loadingSuat.value = false; }
@@ -678,10 +677,7 @@ const suatByFormat = computed(() => {
 
 const selectSuat = async (s) => {
   selectedSuat.value = s;
-  // Automatically proceed to Step 2 after selection for smoother flow
-  setTimeout(() => {
-    step.value = 2;
-  }, 300);
+  // Gỡ bỏ tự động chuyển step để người dùng chủ động nhấn nút "Tiếp tục" ở thanh dưới
 };
 
 // ─── Watch date change ───
@@ -693,7 +689,7 @@ watch(step, async (v) => {
     pickedSeats.value = [];
     loadingGhe.value  = true;
     try {
-      const res = await api.get(`/suat-chieu/${selectedSuat.value.maSuatChieu}/ghe`);
+      const res = await bookingApi.getShowtimeSeats(selectedSuat.value.maSuatChieu);
       if (res.success) ghes.value = res.data;
     } catch(e){ console.error(e); }
     finally { loadingGhe.value = false; }
@@ -711,7 +707,7 @@ const filteredConcessions = computed(() => {
 const loadConcessions = async () => {
     loadingConcessions.value = true;
     try {
-        const res = await api.get('/dat-ve/concessions');
+        const res = await bookingApi.getConcessions();
         if (res.success) {
             concessions.value = res.data;
             // Initialize quantities if not set
@@ -769,10 +765,7 @@ const totalAfterDiscount = computed(() => Math.max(0, subtotal.value - discount.
 const applyPromo = async () => {
   if (!promoCode.value) return;
   if (subtotal.value === 0) { promoMsg.value = 'Vui lòng chọn ghế trước!'; return; }
-  try {
-    const res = await api.post('/khuyen-mai/ap-dung', {
-      maCode: promoCode.value, tongTienGoc: subtotal.value
-    });
+    const res = await promotionApi.applyPromo(promoCode.value, subtotal.value);
     if (res.success) {
       discount.value  = res.data.tienGiam;
       promoMsg.value  = `✓ Giảm ${res.data.tienGiam.toLocaleString()}đ — ${res.data.tenKhuyenMai}`;
@@ -803,7 +796,7 @@ const confirmBooking = () => {
 const handlePaymentSuccess = async () => {
   booking.value = true;
   try {
-    const res = await api.post('/dat-ve', {
+    const res = await bookingApi.confirmBooking({
       maHoaDon: pendingHoaDonId.value,
       maSuatChieu: selectedSuat.value.maSuatChieu,
       maGheIds: pickedIds.value,
@@ -842,28 +835,67 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 
 /* ─── STEP BAR ─── */
 .step-bar {
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(15px);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 1.2rem 0;
-  position: sticky;
-  top: 70px;
-  z-index: 100;
+  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 3rem 0;
+  margin-bottom: 1rem;
+  z-index: 10;
 }
-.steps { display: flex; align-items: center; justify-content: center; }
-.step { display: flex; align-items: center; gap: 0.8rem; font-size: 0.95rem; font-weight: 700; color: #555; transition: 0.3s; }
-.step.active { color: white; }
+.steps { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.step { 
+  display: flex; 
+  flex-direction: column;
+  align-items: center; 
+  gap: 0.8rem; 
+  font-size: 0.85rem; 
+  font-weight: 700; 
+  color: #444; 
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 120px;
+  position: relative;
+}
+.step.active { color: white; transform: scale(1.1); }
 .step.done { color: var(--color-success); }
 
 .step-circle {
-  width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333;
-  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+  width: 40px; height: 40px; border-radius: 50%; border: 2px solid #222;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  background: #0f0f0f;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
 }
-.step.active .step-circle { border-color: var(--color-primary); color: var(--color-primary); box-shadow: 0 0 10px rgba(232, 136, 42, 0.3); }
-.step.done .step-circle { background: var(--color-success); border-color: var(--color-success); color: black; }
+.step.active .step-circle { 
+  border-color: var(--color-primary); 
+  color: var(--color-primary); 
+  box-shadow: 0 0 20px rgba(232, 136, 42, 0.4);
+  transform: translateY(-5px);
+}
+.step.done .step-circle { 
+  background: var(--color-success); 
+  border-color: var(--color-success); 
+  color: black; 
+  transform: scale(0.9);
+}
 
-.step-line { width: 60px; height: 2px; background: #222; margin: 0 1rem; border-radius: 10px; }
-.step-line.done { background: var(--color-success); }
+.step-line { 
+  width: 80px; 
+  height: 2px; 
+  background: #1a1a1a; 
+  margin-top: -10px; /* Cân bằng với text bên dưới vòng tròn */
+  border-radius: 10px; 
+  position: relative;
+  overflow: hidden;
+  align-self: center;
+}
+.step-line::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #e8882a, #00e676);
+  transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.step-line.done::after { width: 100%; }
 
 /* ─── MOVIE SELECTOR ─── */
 .movie-selector-wrapper { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -1303,31 +1335,34 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 .bill-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.9);
   backdrop-filter: blur(10px); z-index: 3000;
-  display: flex; align-items: center; justify-content: center; padding: 2rem;
+  display: flex; align-items: flex-start; justify-content: center; 
+  padding: 2rem; overflow-y: auto;
 }
 .ticket-bill {
-  background: #fff; color: #111; width: 100%; max-width: 600px;
-  border-radius: 32px; padding: 3rem; position: relative;
+  background: #fff; color: #111; width: 100%; max-width: 480px;
+  border-radius: 28px; padding: 2rem; position: relative;
   box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+  margin: auto 0;
 }
-.bill-header { text-align: center; margin-bottom: 2.5rem; }
+.bill-header { text-align: center; margin-bottom: 1.5rem; }
 .success-icon { 
-  width: 60px; height: 60px; background: #00e676; color: white; 
+  width: 50px; height: 50px; background: #00e676; color: white; 
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; margin: 0 auto 1.5rem; box-shadow: 0 10px 20px rgba(0, 230, 118, 0.3);
+  font-size: 1.5rem; margin: 0 auto 1rem; box-shadow: 0 10px 20px rgba(0, 230, 118, 0.3);
 }
-.bill-status { font-weight: 900; font-size: 1.8rem; letter-spacing: -1px; margin-bottom: 0.5rem; }
-.bill-id { font-size: 1.1rem; color: #666; font-weight: 600; }
+.bill-status { font-weight: 900; font-size: 1.5rem; letter-spacing: -1px; margin-bottom: 0.3rem; }
+.bill-id { font-size: 1rem; color: #666; font-weight: 600; }
 .bill-id span { color: var(--color-primary); font-weight: 800; }
 
 .success-qr-container {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .qr-bill-border {
-  padding: 12px;
+  padding: 8px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -1335,8 +1370,8 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 }
 
 .ticket-visual { 
-  display: flex; gap: 2rem; background: #f8f9fa; border: 2px dashed #ddd;
-  padding: 2rem; border-radius: 20px; position: relative;
+  display: flex; gap: 1.2rem; background: #f8f9fa; border: 2px dashed #ddd;
+  padding: 1.2rem; border-radius: 16px; position: relative;
 }
 .ticket-visual::before, .ticket-visual::after {
   content: ''; position: absolute; top: 50%; width: 30px; height: 30px;
@@ -1366,11 +1401,11 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 
 /* ─── Ticket Code Box ─── */
 .ticket-code-box {
-  background: #111; color: #fff; padding: 1rem; border-radius: 16px;
-  display: inline-block; min-width: 240px; margin-top: 1rem;
+  background: #111; color: #fff; padding: 0.8rem; border-radius: 12px;
+  display: inline-block; min-width: 200px; margin-top: 0.8rem;
 }
-.t-label-code { font-size: 0.7rem; font-weight: 800; color: var(--color-primary); letter-spacing: 1.5px; display: block; margin-bottom: 0.4rem; }
-.t-code { font-size: 1.8rem; font-weight: 900; letter-spacing: 3px; margin: 0; font-family: 'Courier New', Courier, monospace; }
+.t-label-code { font-size: 0.65rem; font-weight: 800; color: var(--color-primary); letter-spacing: 1.5px; display: block; margin-bottom: 0.3rem; }
+.t-code { font-size: 1.5rem; font-weight: 900; letter-spacing: 3px; margin: 0; font-family: 'Courier New', Courier, monospace; }
 
 .animate-pulse-scale { animation: pulseScale 2s infinite ease-in-out; }
 @keyframes pulseScale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }

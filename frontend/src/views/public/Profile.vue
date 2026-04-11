@@ -336,7 +336,9 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { useRouter } from 'vue-router';
-import api from '../../api/axios';
+import { authApi } from '../../api/authApi';
+import { bookingApi } from '../../api/bookingApi';
+import { promotionApi } from '../../api/promotionApi';
 import QrcodeVue from 'qrcode.vue';
 import html2canvas from 'html2canvas';
 
@@ -423,7 +425,7 @@ const formatPrice = (price) => {
 
 const loadProfile = async () => {
   try {
-    const res = await api.get('/nguoi-dung/me');
+    const res = await authApi.getProfile();
     if (res.success) {
       profileData.value = res.data;
       form.value.hoTen = profileData.value.hoTen;
@@ -434,7 +436,7 @@ const loadProfile = async () => {
 const loadHistory = async () => {
   loadingHistory.value = true;
   try {
-    const res = await api.get('/hoa-don/my');
+    const res = await bookingApi.getMyTickets();
     if (res.success) {
       invoices.value = res.data.sort((a,b) => new Date(b.ngayGiaoDich) - new Date(a.ngayGiaoDich));
     }
@@ -445,7 +447,7 @@ const loadHistory = async () => {
 const loadRewards = async () => {
   loadingRewards.value = true;
   try {
-    const res = await api.get('/thanh-vien/rewards');
+    const res = await promotionApi.getRewards();
     if (res.success) { rewards.value = res.data; }
   } catch (e) { console.error(e); }
   finally { loadingRewards.value = false; }
@@ -455,7 +457,7 @@ const handleRedeem = async (reward) => {
   if (!confirm(`Bạn có chắc chắn muốn dùng ${reward.diemYeuCau} điểm để đổi "${reward.tenPhanThuong}"?`)) return;
   redeemingId.value = reward.maPhanThuong;
   try {
-    const res = await api.post('/thanh-vien/redeem', { maPhanThuong: reward.maPhanThuong });
+    const res = await promotionApi.redeemReward(reward.maPhanThuong);
     if (res.success) {
       alert(res.message + (res.data.giftCode && res.data.giftCode !== 'VUI LÒNG NHẬN TẠI QUẦY' ? `\nMã quà tặng của bạn: ${res.data.giftCode}` : ''));
       loadProfile(); 
@@ -474,7 +476,7 @@ const updateProfile = async () => {
       payload.matKhauMoi = form.value.matKhauMoi;
       payload.matKhauCu = form.value.matKhauCu;
     }
-    const res = await api.put('/nguoi-dung/me', payload);
+    const res = await authApi.updateProfile(payload);
     if (res.success) {
       updateMsg.value = 'Cập nhật thông tin thành công!';
       authStore.user.hoTen = form.value.hoTen;

@@ -80,7 +80,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import api from '../../api/axios';
+import { adminApi } from '../../api/adminApi';
 import { useAuthStore } from '../../stores/auth';
 
 const authStore = useAuthStore();
@@ -93,7 +93,7 @@ const editForm = ref({});
 
 const loadUsers = async () => {
   try {
-    const res = await api.get('/nguoi-dung');
+    const res = await adminApi.getUsers();
     if (res.success) {
       users.value = res.data;
     }
@@ -117,7 +117,7 @@ const openEdit = (user) => {
 
 const updateUser = async () => {
   try {
-    const res = await api.put(`/nguoi-dung/${editForm.value.maNguoiDung}`, {
+    const res = await adminApi.updateUser(editForm.value.maNguoiDung, {
       hoTen: editForm.value.hoTen,
       vaiTro: editForm.value.vaiTro,
       matKhauMoi: editForm.value.matKhauMoi || null
@@ -135,7 +135,7 @@ const updateUser = async () => {
 const deleteUser = async (id) => {
   if (!confirm('Bạn có chắc chắn muốn xóa người dùng này?')) return;
   try {
-    const res = await api.delete(`/nguoi-dung/${id}`);
+    const res = await adminApi.deleteUser(id);
     if (res.success) {
       alert('Xóa thành công');
       loadUsers();

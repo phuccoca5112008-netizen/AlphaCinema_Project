@@ -80,7 +80,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import api from '../../api/axios';
+import { adminApi } from '../../api/adminApi';
 import { Pie } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, PieController } from 'chart.js';
 
@@ -179,7 +179,7 @@ onMounted(async () => {
     const tuNgay = formatDate(thirtyDaysAgo);
     const denNgay = formatDate(today);
 
-    const res = await api.get(`/hoa-don/doanh-thu?tuNgay=${tuNgay}&denNgay=${denNgay}`);
+    const res = await adminApi.getRevenueStats(tuNgay, denNgay);
     if (res.success) {
       doanhThuData.value = res.data.doanhThuTheoPhims || [];
       totalRevenue.value = res.data.tongDoanhThu || 0;

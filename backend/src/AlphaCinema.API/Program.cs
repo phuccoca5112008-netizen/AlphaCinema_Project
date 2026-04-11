@@ -135,9 +135,14 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AlphaCinemaDbContext>();
     try {
         await db.Database.MigrateAsync(); // Create DB and tables from Migrations
-        await DbSeeder.SeedAsync(db);    // Seed default data if empty
     } catch (Exception ex) { 
-        Console.WriteLine($"[DB Error] Auto setup failed: {ex.Message}");
+        Console.WriteLine($"[DB Warning] Migration skipped or failed: {ex.Message}");
+    }
+
+    try {
+        await DbSeeder.SeedAsync(db);    // Seed default data if empty
+    } catch (Exception ex) {
+        Console.WriteLine($"[DB Error] Seeding failed: {ex.Message}");
     }
 }
 

@@ -5,7 +5,7 @@
     <section class="hero">
       <div class="hero-slides">
         <transition name="slide-fade" mode="out-in">
-          <div class="hero-slide" :key="currentSlide" :style="{ backgroundImage: `url(${slides[currentSlide].backdrop})` }">
+          <div class="hero-slide" :key="currentSlide" :style="{ backgroundImage: `url('${slides[currentSlide].backdrop}')` }">
             <div class="hero-gradient"></div>
             <div class="container hero-content">
               <div class="hero-meta">
@@ -144,7 +144,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
 import { promotions as promoData } from '../../data/promotions';
 
 const router = useRouter();
@@ -162,21 +162,21 @@ const homePromos = computed(() => {
 
 // ─── Slider data ───────────────────────────────────────────
 const slides = ref([
+  { id: 1, title: 'DUNE: HÀNH TINH CÁT 2', type: 'VIỄN TƯỞNG', age: 13,
+    desc: 'Paul Atreides hợp lực với Chani và người Fremen để trả thù những kẻ đã hủy diệt gia đình mình.',
+    backdrop: 'https://wsrv.nl/?url=https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg' },
   { id: 2, title: 'DEADPOOL & WOLVERINE', type: 'HÀNH ĐỘNG', age: 18,
     desc: 'Cặp đôi hoàn cảnh nhất vũ trụ Marvel kết hợp trong một nhiệm vụ giải cứu đa vũ trụ đầy tiếng cười và bạo lực.',
-    backdrop: 'https://image.tmdb.org/t/p/original/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg' },
-  { id: 4, title: 'DUNE: HÀNH TINH CÁT 2', type: 'VIỄN TƯỞNG', age: 13,
-    desc: 'Paul Atreides hợp lực với Chani và người Fremen để trả thù những kẻ đã hủy diệt gia đình mình.',
-    backdrop: 'https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg' },
-  { id: 17, title: 'TRANSFORMERS ONE', type: 'HOẠT HÌNH', age: 10,
-    desc: 'Khám phá nguồn gốc chưa kể của Optimus Prime và Megatron, từ những người bạn thân thiết trở thành kẻ thù không đội trời chung.',
-    backdrop: 'https://image.tmdb.org/t/p/original/cMfokHWle5lfCreoV08cbmkKv6G.jpg' },
-  { id: 10, title: 'MOANA 2', type: 'PHIÊU LƯU', age: 0,
+    backdrop: 'https://wsrv.nl/?url=https://image.tmdb.org/t/p/original/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg' },
+  { id: 5, title: 'INTERSTELLAR', type: 'VIỄN TƯỞNG', age: 13,
+    desc: 'Một nhóm các nhà thám hiểm du hành xuyên qua một lỗ đen ngoài không gian để tìm ngôi nhà mới cho nhân loại.',
+    backdrop: 'https://wsrv.nl/?url=https://image.tmdb.org/t/p/original/2ssWTSVklAEc98frZUQhgtGHx7s.jpg' },
+  { id: 6, title: 'MOANA 2', type: 'PHIÊU LƯU', age: 0,
     desc: 'Hành trình mới của Moana và Maui đến những vùng biển xa xôi để kết nối lại các hòn đảo bị chia cắt.',
-    backdrop: 'https://image.tmdb.org/t/p/original/zo8CIjJ2nfNOevqNajwMRO6Hwka.jpg' },
-  { id: 1, title: 'TIẾNG THÉT VI', type: 'KINH DỊ', age: 18,
-    desc: 'Những người sống sót sau vụ thảm sát Ghostface rời Woodsboro để bắt đầu cuộc sống mới tại New York, nhưng nỗi ám ảnh vẫn chưa chấm dứt.',
-    backdrop: 'https://image.tmdb.org/t/p/original/44immBwzhDVyjn87b3x3l9mlhAD.jpg' },
+    backdrop: 'https://wsrv.nl/?url=https://image.tmdb.org/t/p/original/vYqt6kb4lcF8wwqsMMaULkP9OEn.jpg' },
+  { id: 4, title: 'OPPENHEIMER', type: 'LỊCH SỬ', age: 16,
+    desc: 'Câu chuyện về J. Robert Oppenheimer và quá trình tạo ra bom nguyên tử, thay đổi dòng lịch sử nhân loại.',
+    backdrop: 'https://wsrv.nl/?url=https://image.tmdb.org/t/p/original/neeNHeXjMF5fXoCJRsOmkNGC7q.jpg' },
 ]);
 const currentSlide = ref(0);
 let timer = null;
@@ -212,14 +212,14 @@ const formatVND = (val) => {
 
 const loadPhims = async () => {
   try {
-    const res = await api.get('/phim');
+    const res = await movieApi.getMovies();
     if (res.success) allPhims.value = res.data;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };
 
 const fallbackImg = (e) => {
-  e.target.src = 'https://via.placeholder.com/400x600/1a1a1a/555?text=No+Poster';
+  e.target.src = 'https://placehold.co/400x600/1a1a1a/E8882A?text=Alpha+Cinema';
 };
 
 // ─── Quick booking bar ─────────────────────────────────────

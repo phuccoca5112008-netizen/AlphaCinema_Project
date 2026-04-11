@@ -44,7 +44,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
 
 const route = useRoute();
 const phims = ref([]);
@@ -59,11 +59,7 @@ const filters = ref({
 const fetchMovies = async () => {
   loading.value = true;
   try {
-    let url = '/phim?';
-    if (filters.value.tuKhoa) url += `tuKhoa=${filters.value.tuKhoa}&`;
-    if (filters.value.trangThai) url += `trangThai=${filters.value.trangThai}&`;
-    
-    const res = await api.get(url);
+    const res = await movieApi.getMovies(filters.value);
     if (res.success) {
       phims.value = res.data;
     }

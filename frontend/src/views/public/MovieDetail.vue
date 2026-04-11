@@ -6,7 +6,7 @@
 
     <div class="content glass-panel">
       <div class="poster-col">
-        <img :src="phim.poster || 'https://via.placeholder.com/400x600/1e1e2d/9aa0a6?text=No+Poster'" alt="Poster" class="detail-poster">
+        <img :src="phim.poster" @error="(e) => e.target.src = 'https://placehold.co/400x600/1a1a1a/E8882A?text=Alpha+Cinema'" alt="Poster" class="detail-poster">
         <router-link :to="`/booking?phim=${phim.maPhim}`" class="btn btn-primary btn-block">Mua Vé Ngay</router-link>
       </div>
       
@@ -90,7 +90,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
-import api from '../../api/axios';
+import { movieApi } from '../../api/movieApi';
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -120,7 +120,7 @@ const formatDate = (dateStr) => {
 
 const fetchReviews = async () => {
   try {
-    const res = await api.get(`/danh-gia/phim/${route.params.id}`);
+    const res = await movieApi.getMovieReviews(route.params.id);
     if (res.success) reviews.value = res.data;
   } catch (err) { console.error(err); }
 };
@@ -128,7 +128,7 @@ const fetchReviews = async () => {
 const checkEligibility = async () => {
   if (!user) return;
   try {
-    const res = await api.get(`/danh-gia/check-eligibility/${route.params.id}`);
+    const res = await movieApi.checkReviewEligibility(route.params.id);
     isEligible.value = res.data;
     
     // Nếu không đủ điều kiện, kiểm tra xem có phải vì đã đánh giá rồi không
@@ -143,7 +143,7 @@ const submitReview = async () => {
   if (!newReview.value.noiDung.trim()) return alert("Vui lòng nhập nội dung bình luận!");
   submitting.value = true;
   try {
-    const res = await api.post('/danh-gia', {
+    const res = await movieApi.submitReview({
       maPhim: parseInt(route.params.id),
       diemSo: newReview.value.diemSo,
       noiDung: newReview.value.noiDung
@@ -165,7 +165,7 @@ const submitReview = async () => {
 onMounted(async () => {
   const id = route.params.id;
   try {
-    const res = await api.get(`/phim/${id}`);
+    const res = await movieApi.getMovieDetail(id);
     if (res.success) phim.value = res.data;
     await fetchReviews();
     await checkEligibility();

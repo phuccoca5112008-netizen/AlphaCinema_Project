@@ -89,7 +89,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useRouter } from 'vue-router';
-import logoImg from './assets/logo.png';
+import logoImg from './assets/logo.svg';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -125,7 +125,7 @@ const logout = () => { authStore.logout(); router.push('/'); };
 .logo:hover { transform: scale(1.05); }
 
 .brand-logo-img {
-  height: 85px;
+  height: 65px; /* Giảm nhẹ để vừa vặn hơn với text bên cạnh */
   width: auto;
   object-fit: contain;
 }

@@ -127,7 +127,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import api from '../../api/axios';
+import { promotionApi } from '../../api/promotionApi';
 
 const activeTab = ref('all');
 const promotions = ref([]);
@@ -150,7 +150,7 @@ const getImageUrl = (name) => {
 
 const loadPromotions = async () => {
   try {
-    const res = await api.get('/khuyen-mai');
+    const res = await promotionApi.getPromotions();
     if (res.success) {
       promotions.value = res.data.map(p => ({
         id: p.maKhuyenMai,
