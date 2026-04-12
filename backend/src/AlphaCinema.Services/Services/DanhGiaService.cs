@@ -12,24 +12,26 @@ public class DanhGiaService : IDanhGiaService
     public DanhGiaService(AlphaCinemaDbContext context) => _context = context;
 
     public async Task<IEnumerable<DanhGiaResponse>> GetByPhimAsync(int maPhim)
-        => await _context.DanhGias.Include(d => d.NguoiDung)
+        => await _context.DanhGias.Include(d => d.NguoiDung).Include(d => d.Phim)
             .Where(d => d.MaPhim == maPhim)
             .OrderByDescending(d => d.NgayTao)
             .Select(d => new DanhGiaResponse
             {
                 MaDanhGia = d.MaDanhGia, MaPhim = d.MaPhim,
-                HoTenNguoiDung = d.NguoiDung.HoTen,
-                NoiDung = d.NoiDung, DiemSo = d.DiemSo, NgayTao = d.NgayTao
+                TenPhim = d.Phim.TenPhim,
+                TenNguoiDung = d.NguoiDung.HoTen,
+                BinhLuan = d.NoiDung, DiemSo = d.DiemSo, NgayDanhGia = d.NgayTao
             }).ToListAsync();
 
     public async Task<IEnumerable<DanhGiaResponse>> GetAllAsync()
-        => await _context.DanhGias.Include(d => d.NguoiDung)
+        => await _context.DanhGias.Include(d => d.NguoiDung).Include(d => d.Phim)
             .OrderByDescending(d => d.NgayTao)
             .Select(d => new DanhGiaResponse
             {
                 MaDanhGia = d.MaDanhGia, MaPhim = d.MaPhim,
-                HoTenNguoiDung = d.NguoiDung.HoTen,
-                NoiDung = d.NoiDung, DiemSo = d.DiemSo, NgayTao = d.NgayTao
+                TenPhim = d.Phim.TenPhim,
+                TenNguoiDung = d.NguoiDung.HoTen,
+                BinhLuan = d.NoiDung, DiemSo = d.DiemSo, NgayDanhGia = d.NgayTao
             }).ToListAsync();
     public async Task<bool> IsUserEligibleToReview(int maNguoiDung, int maPhim)
     {
@@ -73,11 +75,13 @@ public class DanhGiaService : IDanhGiaService
         await _context.SaveChangesAsync();
 
         var nguoiDung = await _context.NguoiDungs.FindAsync(maNguoiDung);
+        var phim = await _context.Phims.FindAsync(dg.MaPhim);
         return new DanhGiaResponse
         {
             MaDanhGia = dg.MaDanhGia, MaPhim = dg.MaPhim,
-            HoTenNguoiDung = nguoiDung!.HoTen,
-            NoiDung = dg.NoiDung, DiemSo = dg.DiemSo, NgayTao = dg.NgayTao
+            TenPhim = phim!.TenPhim,
+            TenNguoiDung = nguoiDung!.HoTen,
+            BinhLuan = dg.NoiDung, DiemSo = dg.DiemSo, NgayDanhGia = dg.NgayTao
         };
     }
 

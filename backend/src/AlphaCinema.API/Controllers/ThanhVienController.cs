@@ -41,4 +41,11 @@ public class ThanhVienController : ControllerBase
             return BadRequest(new { success = false, message = ex.Message });
         }
     }
+
+    [HttpGet("reward-history")]
+    public async Task<IActionResult> GetHistory()
+    {
+        var result = await _service.GetRewardHistoryAsync(GetUserId());
+        return Ok(new { success = true, data = result });
+    }
 }

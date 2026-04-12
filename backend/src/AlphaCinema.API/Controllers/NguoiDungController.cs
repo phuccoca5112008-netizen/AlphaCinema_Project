@@ -55,6 +55,10 @@ public class NguoiDungController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateNguoiDungRequest request)
     {
+        // Admin không được phép đổi mật khẩu của người dùng khác qua endpoint này
+        request.MatKhauMoi = null;
+        request.MatKhauCu = null;
+
         var result = await _service.UpdateAsync(id, request);
         return Ok(new { success = true, data = result });
     }

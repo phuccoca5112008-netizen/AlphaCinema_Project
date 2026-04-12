@@ -23,7 +23,7 @@ public class KhuyenMaiService : IKhuyenMaiService
     };
 
     public async Task<IEnumerable<KhuyenMaiResponse>> GetAllAsync()
-        => (await _context.KhuyenMais.ToListAsync()).Select(ToResponse);
+        => (await _context.KhuyenMais.Where(k => k.MaNguoiDung == null).ToListAsync()).Select(ToResponse);
 
     public async Task<KhuyenMaiResponse?> GetByIdAsync(int id)
     {
@@ -45,14 +45,23 @@ public class KhuyenMaiService : IKhuyenMaiService
             ? request.TongTienGoc * km.GiaTriGiam / 100
             : km.GiaTriGiam;
 
-        if (km.GiamToiDa.HasValue && tienGiam > km.GiamToiDa)
-            tienGiam = km.GiamToiDa.Value;
+        decimal tongTienSauGiam = request.TongTienGoc - tienGiam;
+        if (tongTienSauGiam < 0) tongTienSauGiam = 0;
+
+        string? tenDoAnVatTang = null;
+        if (km.MaDoAnVatTang.HasValue)
+        {
+            var doAn = await _context.DoAnVats.FindAsync(km.MaDoAnVatTang.Value);
+            tenDoAnVatTang = doAn?.TenMon;
+        }
 
         return new ApDungKhuyenMaiResponse
         {
             TienGiam = tienGiam,
-            TongTienSauGiam = request.TongTienGoc - tienGiam,
-            TenKhuyenMai = km.TenKhuyenMai
+            TongTienSauGiam = tongTienSauGiam,
+            TenKhuyenMai = km.TenKhuyenMai,
+            MaDoAnVatTang = km.MaDoAnVatTang,
+            TenDoAnVatTang = tenDoAnVatTang
         };
     }
 

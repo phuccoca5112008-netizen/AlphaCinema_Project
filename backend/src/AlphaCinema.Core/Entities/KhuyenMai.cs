@@ -15,7 +15,11 @@ public class KhuyenMai
 
     public string? HinhAnh { get; set; }             // Ảnh poster khuyến mãi
     public string? PhanLoai { get; set; }            // Phân loại: VIP MEMBER, ƯU ĐÃI HOT, STUDENT DEAL...
+    public int? MaDoAnVatTang { get; set; }          // Quà tặng kèm (Mã đồ ăn vặt)
 
+    public int? MaNguoiDung { get; set; }            // Nullable: Nếu có MaNguoiDung thì mã này là mã cá nhân do đổi quà
+    
     // Navigation
+    public NguoiDung? NguoiDung { get; set; }
     public ICollection<HoaDon> HoaDons { get; set; } = new List<HoaDon>();
 }

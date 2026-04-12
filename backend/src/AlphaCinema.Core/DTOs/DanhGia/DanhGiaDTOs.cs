@@ -4,10 +4,11 @@ public class DanhGiaResponse
 {
     public int MaDanhGia { get; set; }
     public int MaPhim { get; set; }
-    public string HoTenNguoiDung { get; set; } = string.Empty;
-    public string? NoiDung { get; set; }
+    public string TenPhim { get; set; } = string.Empty;
+    public string TenNguoiDung { get; set; } = string.Empty;
+    public string? BinhLuan { get; set; }
     public int DiemSo { get; set; }
-    public DateTime NgayTao { get; set; }
+    public DateTime NgayDanhGia { get; set; }
 }
 
 public class CreateDanhGiaRequest

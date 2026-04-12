@@ -19,7 +19,7 @@ public class ThanhVienService : IThanhVienService
         new RewardResponse { MaPhanThuong = 1, TenPhanThuong = "Bắp rang ngọt Caramel", MoTa = "Quy đổi 1 phần bắp ngọt Caramel thơm lừng tại quầy.", DiemYeuCau = 150, LoaiPhanThuong = "Combo", HinhAnh = "/assets/rewards/bap_caramel.png" },
         new RewardResponse { MaPhanThuong = 2, TenPhanThuong = "Nước ngọt Cola (Size L)", MoTa = "Quy đổi 1 ly Pepsi/Coca Cola mát lạnh size lớn.", DiemYeuCau = 100, LoaiPhanThuong = "Combo", HinhAnh = "/assets/rewards/cola_l.png" },
         new RewardResponse { MaPhanThuong = 5, TenPhanThuong = "Combo Đơn (Bắp Caramel + Nước L)", MoTa = "Quy đổi 1 combo gồm bắp ngọt Caramel và 1 ly nước ngọt size lớn.", DiemYeuCau = 250, LoaiPhanThuong = "Combo", HinhAnh = "/assets/rewards/combo_don.png" },
-        new RewardResponse { MaPhanThuong = 6, TenPhanThuong = "Combo Đôi (Bắp L + 2 Nước L)", MoTa = "Quy đổi 1 combo lớn cho cặp đôi.", DiemYeuCau = 350, LoaiPhanThuong = "Combo", HinhAnh = "https://images.unsplash.com/photo-1585647347384-2593bcac5503?q=80&w=500" },
+        new RewardResponse { MaPhanThuong = 6, TenPhanThuong = "Combo Đôi (Bắp L + 2 Nước L)", MoTa = "Quy đổi 1 combo lớn cho cặp đôi.", DiemYeuCau = 350, LoaiPhanThuong = "Combo", HinhAnh = "/assets/rewards/combo_doi.png" },
         new RewardResponse { MaPhanThuong = 3, TenPhanThuong = "Voucher Giảm 50% Vé", MoTa = "Giảm 50% cho 1 vé xem phim bất kỳ (Áp dụng 2D/3D).", DiemYeuCau = 300, LoaiPhanThuong = "Voucher", HinhAnh = "/assets/rewards/voucher_50.png" },
         new RewardResponse { MaPhanThuong = 4, TenPhanThuong = "1 Vé Xem Phim Miễn Phí", MoTa = "Quy đổi 1 vé máy tính miễn phí cho phim bất kỳ.", DiemYeuCau = 600, LoaiPhanThuong = "Ticket", HinhAnh = "/assets/rewards/ve_mien_phi.png" },
         new RewardResponse { MaPhanThuong = 7, TenPhanThuong = "Nâng cấp ghế VIP", MoTa = "Nâng cấp từ ghế thường lên ghế VIP miễn phí.", DiemYeuCau = 80, LoaiPhanThuong = "Service", HinhAnh = "/assets/rewards/ghe_vip.png" },
@@ -47,33 +47,67 @@ public class ThanhVienService : IThanhVienService
         // Subtract points
         user.DiemTichLuy -= reward.DiemYeuCau;
 
-        // Create a Voucher code (KhuyenMai)
+        // Luôn tạo mã KhuyenMai để áp dụng vào hóa đơn
         var voucherCode = $"REDEEM-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
         
-        bool isVoucherOrTicket = reward.LoaiPhanThuong == "Voucher" || reward.LoaiPhanThuong == "Ticket";
-        
-        if (isVoucherOrTicket)
+        // Xác định giá trị giảm và món được tặng
+        string loaiGiamGia = "SoTien";
+        decimal giaTriGiam = 0; 
+        int? maDoAnVatTang = null;
+
+        if (reward.MaPhanThuong == 3) // Voucher 50%
         {
-            var km = new Core.Entities.KhuyenMai
-            {
-                MaCodeGiamGia = voucherCode,
-                TenKhuyenMai = $"Đổi thưởng: {reward.TenPhanThuong}",
-                MoTa = $"Phần thưởng quy đổi từ điểm tích lũy: {reward.MoTa}",
-                LoaiGiamGia = reward.MaPhanThuong == 3 ? "PhanTram" : "SoTien",
-                GiaTriGiam = reward.MaPhanThuong == 3 ? 50 : 120000, // 120k is max price for a ticket
-                NgayBatDau = DateTime.Now,
-                NgayKetThuc = DateTime.Now.AddDays(30),
-                DonHangToiThieu = 0
-            };
-            _context.KhuyenMais.Add(km);
-            await _context.SaveChangesAsync();
+            loaiGiamGia = "PhanTram";
+            giaTriGiam = 50;
         }
+        else if (reward.MaPhanThuong == 4) giaTriGiam = 120000; // Vé miễn phí (Coi như giảm tiền mặt cho vé)
+        else if (reward.MaPhanThuong == 1) maDoAnVatTang = 2;   // Bắp L
+        else if (reward.MaPhanThuong == 2) maDoAnVatTang = 5;   // Coca L
+        else if (reward.MaPhanThuong == 5) maDoAnVatTang = 10;  // Combo Single
+        else if (reward.MaPhanThuong == 6) maDoAnVatTang = 11;  // Combo Couple
+        else if (reward.MaPhanThuong == 7) giaTriGiam = 30000;  // Upgrade
+        else if (reward.MaPhanThuong == 8) giaTriGiam = 250000; // Bình nước
+
+        var km = new Core.Entities.KhuyenMai
+        {
+            MaCodeGiamGia = voucherCode,
+            TenKhuyenMai = $"Đổi thưởng: {reward.TenPhanThuong}",
+            MoTa = $"Phần thưởng quy đổi từ điểm tích lũy: {reward.MoTa}",
+            LoaiGiamGia = loaiGiamGia,
+            GiaTriGiam = giaTriGiam,
+            NgayBatDau = DateTime.Now.AddMinutes(-5),
+            NgayKetThuc = DateTime.Now.AddDays(30),
+            DonHangToiThieu = 0,
+            MaNguoiDung = maNguoiDung,
+            MaDoAnVatTang = maDoAnVatTang
+        };
+        _context.KhuyenMais.Add(km);
+        await _context.SaveChangesAsync();
 
         return new RedeemResponse 
         { 
             Success = true, 
             Message = $"Quy đổi thành công {reward.TenPhanThuong}!", 
-            GiftCode = isVoucherOrTicket ? voucherCode : "VUI LÒNG NHẬN TẠI QUẦY (Mang theo mã GD)" 
+            GiftCode = voucherCode
         };
+    }
+
+    public async Task<IEnumerable<RewardHistoryResponse>> GetRewardHistoryAsync(int maNguoiDung)
+    {
+        return await _context.KhuyenMais
+            .Where(k => k.MaNguoiDung == maNguoiDung)
+            .OrderByDescending(k => k.NgayBatDau)
+            .Select(k => new RewardHistoryResponse
+            {
+                MaKhuyenMai = k.MaKhuyenMai,
+                TenKhuyenMai = k.TenKhuyenMai,
+                MaCodeGiamGia = k.MaCodeGiamGia,
+                MoTa = k.MoTa,
+                NgayBatDau = k.NgayBatDau,
+                NgayKetThuc = k.NgayKetThuc,
+                LoaiGiamGia = k.LoaiGiamGia,
+                GiaTriGiam = k.GiaTriGiam
+            })
+            .ToListAsync();
     }
 }

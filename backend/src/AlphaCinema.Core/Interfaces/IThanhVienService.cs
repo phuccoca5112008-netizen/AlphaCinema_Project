@@ -6,4 +6,5 @@ public interface IThanhVienService
 {
     Task<IEnumerable<RewardResponse>> GetAvailableRewardsAsync();
     Task<RedeemResponse> RedeemRewardAsync(int maNguoiDung, int maPhanThuong);
+    Task<IEnumerable<RewardHistoryResponse>> GetRewardHistoryAsync(int maNguoiDung);
 }

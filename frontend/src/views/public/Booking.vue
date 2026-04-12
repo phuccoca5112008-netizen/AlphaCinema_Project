@@ -320,8 +320,9 @@
                 <button class="btn btn-primary" @click="applyPromo" :disabled="promoApplied">Áp dụng</button>
               </div>
               <transition name="fade">
-                <p v-if="promoMsg" class="promo-msg mt-3" :class="{ ok: promoApplied }">
-                  <i class="fas" :class="promoApplied ? 'fa-check-circle' : 'fa-info-circle'"></i> {{ promoMsg }}
+                <p v-if="promoMsg" class="promo-msg mt-3" :class="{ ok: promoApplied, 'gift-msg': freeGiftItem }">
+                  <i class="fas" :class="freeGiftItem ? 'fa-gift' : (promoApplied ? 'fa-check-circle' : 'fa-info-circle')"></i> 
+                  {{ promoMsg }}
                 </p>
               </transition>
             </div>
@@ -443,6 +444,10 @@
                     <span>Bắp nước:</span>
                     <span>{{ selectedConcessionItems.length }} Món</span>
                   </div>
+                  <div class="bs-row gift-row" v-if="freeGiftItem">
+                    <span>🎁 Quà tặng ưu đãi:</span>
+                    <span class="text-primary">{{ freeGiftItem.tenMon }} (x1)</span>
+                  </div>
                   <div class="bs-row">
                     <span>Phương thức:</span>
                     <span>{{ payMethods.find(m => m.id === payMethod)?.name || payMethod }}</span>
@@ -482,6 +487,15 @@
                   </div>
                   <span class="s-item-price">{{ (c.gia * c.soLuong).toLocaleString() }}đ</span>
                 </div>
+
+                <!-- Free Gift Row -->
+                <div class="summary-item free-gift-summary animate-in" v-if="freeGiftItem">
+                  <div class="s-item-info">
+                    <span class="s-item-name text-primary">🎁 {{ freeGiftItem.tenMon }}</span>
+                    <span class="s-item-desc">Món quà từ mã ưu đãi</span>
+                  </div>
+                  <span class="s-item-price text-primary">MIỄN PHÍ</span>
+                </div>
               </div>
 
               <div class="summary-divider my-4"></div>
@@ -491,7 +505,7 @@
                   <span>Tạm tính</span>
                   <span>{{ subtotal.toLocaleString() }}đ</span>
                 </div>
-                <div class="total-row discount" v-if="discount > 0">
+                <div class="total-row discount" v-if="discount > 0 && !freeGiftItem">
                   <span>Ưu đãi áp dụng</span>
                   <span>-{{ discount.toLocaleString() }}đ</span>
                 </div>
@@ -580,6 +594,7 @@ const showBill = ref(false);
 const qrUrl = ref('');
 const bookedResult = ref(null);
 const pendingHoaDonId = ref(null);
+const freeGiftItem = ref(null); // { maDoAnVatTang, tenDoAnVatTang }
 
 // ─── Seat Confirmation (Lock) ───
 const handleSeatConfirmation = async () => {
@@ -769,7 +784,16 @@ const applyPromo = async () => {
     const res = await promotionApi.applyPromo(promoCode.value, subtotal.value);
     if (res.success) {
       discount.value  = res.data.tienGiam;
-      promoMsg.value  = `✓ Giảm ${res.data.tienGiam.toLocaleString()}đ — ${res.data.tenKhuyenMai}`;
+      freeGiftItem.value = res.data.maDoAnVatTang ? { 
+        maDoAnVat: res.data.maDoAnVatTang, 
+        tenMon: res.data.tenDoAnVatTang 
+      } : null;
+
+      if (freeGiftItem.value) {
+        promoMsg.value = `✓ Nhận ngay: ${res.data.tenDoAnVatTang} (Món quà tặng kèm)`;
+      } else {
+        promoMsg.value  = `✓ Giảm ${res.data.tienGiam.toLocaleString()}đ — ${res.data.tenKhuyenMai}`;
+      }
       promoApplied.value = true;
     }
   } catch(e) {
@@ -803,10 +827,16 @@ const handlePaymentSuccess = async () => {
       maGheIds: pickedIds.value,
       maCodeGiamGia: promoApplied.value ? promoCode.value : null,
       phuongThucThanhToan: payMethod.value,
-      concessions: selectedConcessionItems.value.map(c => ({
-          maDoAnVat: c.maDoAnVat,
-          soLuong: c.soLuong
-      }))
+      concessions: [
+          ...selectedConcessionItems.value.map(c => ({
+              maDoAnVat: c.maDoAnVat,
+              soLuong: c.soLuong
+          })),
+          ...(freeGiftItem.value ? [{
+              maDoAnVat: freeGiftItem.value.maDoAnVat,
+              soLuong: 1
+          }] : [])
+      ]
     });
     if (res.success) {
       showQR.value = false;
@@ -1410,4 +1440,13 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 
 .animate-pulse-scale { animation: pulseScale 2s infinite ease-in-out; }
 @keyframes pulseScale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+.gift-row {
+  margin-top: 5px;
+  padding: 8px 0;
+  border-top: 1px dashed #eee;
+  animation: slideIn 0.5s ease;
+}
+.gift-row span:last-child {
+  font-weight: 800;
+}
 </style>

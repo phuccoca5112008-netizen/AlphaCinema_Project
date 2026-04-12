@@ -252,48 +252,96 @@
                  </div>
                </header>
 
-               <div class="reward-tabs mb-4">
-                 <button 
-                  v-for="cat in ['Tất cả', 'Combo', 'Voucher', 'Ticket', 'Khác']" 
-                  :key="cat" 
-                  class="cat-chip" 
-                  :class="{ active: selectedCategory === cat }"
-                  @click="selectedCategory = cat"
-                 >
-                   {{ cat }}
-                 </button>
+               <nav class="rewards-sub-nav mb-5">
+                  <button class="sub-nav-item" :class="{ active: currentRewardSubTab === 'exchange' }" @click="currentRewardSubTab = 'exchange'">
+                    <i class="fas fa-gift me-2"></i> Đổi Phần Thưởng
+                  </button>
+                  <button class="sub-nav-item" :class="{ active: currentRewardSubTab === 'history' }" @click="currentRewardSubTab = 'history'">
+                    <i class="fas fa-history me-2"></i> Lịch Sử Ưu Đãi
+                  </button>
+               </nav>
+
+               <div v-if="currentRewardSubTab === 'exchange'">
+                 <div class="reward-tabs mb-4">
+                   <button 
+                    v-for="cat in ['Tất cả', 'Combo', 'Voucher', 'Ticket', 'Khác']" 
+                    :key="cat" 
+                    class="cat-chip" 
+                    :class="{ active: selectedCategory === cat }"
+                    @click="selectedCategory = cat"
+                   >
+                     {{ cat }}
+                   </button>
+                 </div>
+
+                 <div v-if="loadingRewards" class="loading-state">
+                    <div class="spinner-large"></div>
+                 </div>
+                 
+                 <div v-else class="rewards-container">
+                    <div v-for="reward in filteredRewards" :key="reward.maPhanThuong" class="reward-item-premium" :class="{ 'disabled': profileData?.diemTichLuy < reward.diemYeuCau }">
+                      <div class="reward-image-box">
+                        <img :src="reward.hinhAnh" :alt="reward.tenPhanThuong">
+                        <div class="reward-floating-cost">{{ reward.diemYeuCau }} <small>Pts</small></div>
+                        <div class="reward-type-tag">{{ reward.loaiPhanThuong }}</div>
+                      </div>
+                      <div class="reward-info">
+                        <h3>{{ reward.tenPhanThuong }}</h3>
+                        <p>{{ reward.moTa }}</p>
+                        
+                        <div class="reward-footer">
+                          <div class="reward-progress" v-if="profileData?.diemTichLuy < reward.diemYeuCau">
+                             <div class="progress-track">
+                               <div class="progress-fill" :style="{ width: (profileData?.diemTichLuy / reward.diemYeuCau * 100) + '%' }"></div>
+                             </div>
+                             <span class="progress-note">Cần thêm {{ reward.diemYeuCau - profileData?.diemTichLuy }} điểm</span>
+                          </div>
+                          <button 
+                            class="btn-redeem" 
+                            :disabled="profileData?.diemTichLuy < reward.diemYeuCau || redeemingId === reward.maPhanThuong"
+                            @click="handleRedeem(reward)"
+                          >
+                            {{ redeemingId === reward.maPhanThuong ? 'Đang quy đổi...' : (profileData?.diemTichLuy >= reward.diemYeuCau ? 'ĐỔI NGAY' : 'CHƯA ĐỦ ĐIỂM') }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                 </div>
                </div>
 
-               <div v-if="loadingRewards" class="loading-state">
-                  <div class="spinner-large"></div>
-               </div>
-               
-               <div v-else class="rewards-container">
-                  <div v-for="reward in filteredRewards" :key="reward.maPhanThuong" class="reward-item-premium" :class="{ 'disabled': profileData?.diemTichLuy < reward.diemYeuCau }">
-                    <div class="reward-image-box">
-                      <img :src="reward.hinhAnh" :alt="reward.tenPhanThuong">
-                      <div class="reward-floating-cost">{{ reward.diemYeuCau }} <small>Pts</small></div>
-                      <div class="reward-type-tag">{{ reward.loaiPhanThuong }}</div>
-                    </div>
-                    <div class="reward-info">
-                      <h3>{{ reward.tenPhanThuong }}</h3>
-                      <p>{{ reward.moTa }}</p>
-                      
-                      <div class="reward-footer">
-                        <div class="reward-progress" v-if="profileData?.diemTichLuy < reward.diemYeuCau">
-                           <div class="progress-track">
-                             <div class="progress-fill" :style="{ width: (profileData?.diemTichLuy / reward.diemYeuCau * 100) + '%' }"></div>
-                           </div>
-                           <span class="progress-note">Cần thêm {{ reward.diemYeuCau - profileData?.diemTichLuy }} đ</span>
-                        </div>
-                        <button 
-                          class="btn-redeem" 
-                          :disabled="profileData?.diemTichLuy < reward.diemYeuCau || redeemingId === reward.maPhanThuong"
-                          @click="handleRedeem(reward)"
-                        >
-                          {{ redeemingId === reward.maPhanThuong ? 'Đang quy đổi...' : (profileData?.diemTichLuy >= reward.diemYeuCau ? 'ĐỔI NGAY' : 'CHƯA ĐỦ ĐIỂM') }}
-                        </button>
-                      </div>
+               <!-- REWARD HISTORY SUBTAB -->
+               <div v-else class="reward-history-section">
+                  <div v-if="loadingHistory" class="loading-state">
+                    <div class="spinner-large"></div>
+                  </div>
+                  <div v-else-if="rewardHistory.length === 0" class="empty-state glass-panel p-5">
+                    <i class="fas fa-ticket-alt opacity-20 fa-3x mb-3"></i>
+                    <p>Bạn chưa có mã ưu đãi nào. Hãy dùng điểm để đổi nhé!</p>
+                  </div>
+                  <div v-else class="reward-history-grid">
+                    <div v-for="item in rewardHistory" :key="item.maKhuyenMai" class="history-promo-card glass-panel">
+                       <div class="promo-header">
+                          <div class="promo-type">
+                            <span v-if="item.giaTriGiam > 0">🧧 {{ item.loaiGiamGia === 'PhanTram' ? 'PHẦN TRĂM' : 'TIỀM MẶT' }}</span>
+                            <span v-else>🎁 QUÀ TẶNG</span>
+                          </div>
+                          <div class="promo-date">HSD: {{ formatDate(item.ngayKetThuc).split(' ')[1] }}</div>
+                       </div>
+                       <h3 class="promo-title">{{ item.tenKhuyenMai }}</h3>
+                       <p class="promo-desc">{{ item.moTa }}</p>
+                       <div class="promo-code-container">
+                          <span class="code-label">MÃ QUÀ TẶNG:</span>
+                          <div class="code-box">
+                             <span class="code-val">{{ item.maCodeGiamGia }}</span>
+                             <button class="btn-copy" @click="copyCode(item.maCodeGiamGia)" title="Sao chép">
+                                <i class="far fa-copy"></i>
+                             </button>
+                          </div>
+                       </div>
+                       <div class="promo-value" v-if="item.giaTriGiam > 0">
+                          <span class="v-label">GIÁ TRỊ:</span>
+                          <span class="v-amount">{{ item.giaTriGiam.toLocaleString() }}{{ item.loaiGiamGia === 'PhanTram' ? '%' : 'đ' }}</span>
+                       </div>
                     </div>
                   </div>
                </div>
@@ -335,6 +383,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useAuthStore } from '../../stores/auth';
+import { useToastStore } from '../../stores/toast';
 import { useRouter } from 'vue-router';
 import { authApi } from '../../api/authApi';
 import { bookingApi } from '../../api/bookingApi';
@@ -343,12 +392,15 @@ import QrcodeVue from 'qrcode.vue';
 import html2canvas from 'html2canvas';
 
 const authStore = useAuthStore();
+const toast = useToastStore();
 const router = useRouter();
 
 const currentTab = ref('info');
+const currentRewardSubTab = ref('exchange'); // exchange | history
 const profileData = ref(null);
 const invoices = ref([]);
 const rewards = ref([]);
+const rewardHistory = ref([]);
 const selectedCategory = ref('Tất cả');
 
 const loading = ref(false);
@@ -459,11 +511,27 @@ const handleRedeem = async (reward) => {
   try {
     const res = await promotionApi.redeemReward(reward.maPhanThuong);
     if (res.success) {
-      alert(res.message + (res.data.giftCode && res.data.giftCode !== 'VUI LÒNG NHẬN TẠI QUẦY' ? `\nMã quà tặng của bạn: ${res.data.giftCode}` : ''));
-      loadProfile(); 
-    } else { alert(res.message); }
-  } catch (e) { alert(e.message || 'Có lỗi xảy ra khi quy đổi.'); }
+      toast.add(`Quy đổi thành công: ${reward.tenPhanThuong}! Mã quả tặng đã được lưu vào lịch sử.`, 'success');
+      loadProfile();
+      loadRewardHistory();
+      currentRewardSubTab.value = 'history';
+    } else { toast.add(res.message, 'error'); }
+  } catch (e) { toast.add(e.message || 'Có lỗi xảy ra khi quy đổi.', 'error'); }
   finally { redeemingId.value = null; }
+};
+
+const loadRewardHistory = async () => {
+    try {
+        const res = await promotionApi.getRewardHistory();
+        if (res.success) {
+            rewardHistory.value = res.data;
+        }
+    } catch (e) { console.error(e); }
+};
+
+const copyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    toast.add('Đã sao chép mã ưu đãi!', 'success');
 };
 
 const updateProfile = async () => {
@@ -496,6 +564,7 @@ onMounted(() => {
   loadProfile();
   loadHistory();
   loadRewards();
+  loadRewardHistory();
 });
 </script>
 
@@ -908,5 +977,95 @@ onMounted(() => {
   .form-grid .full-width { grid-column: span 1; }
   .form-divider { grid-column: span 1; }
   .guide-steps { grid-template-columns: 1fr; }
+}
+/* Rewards Sub Nav */
+.rewards-sub-nav {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 0.5rem;
+}
+
+.sub-nav-item {
+  background: none; border: none;
+  padding: 0.8rem 1.5rem;
+  color: var(--color-text-sub);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  border-radius: 8px 8px 0 0;
+}
+
+.sub-nav-item:hover { color: white; background: rgba(255, 255, 255, 0.03); }
+.sub-nav-item.active {
+  color: var(--color-primary);
+  background: rgba(232, 136, 42, 0.08);
+  border-bottom: 3px solid var(--color-primary);
+}
+
+/* History Promo Card */
+.reward-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.history-promo-card {
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-promo-card:hover { transform: translateY(-5px); border-color: var(--color-primary); }
+
+.promo-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1rem;
+}
+
+.promo-type { font-size: 0.7rem; font-weight: 800; color: var(--color-primary); text-transform: uppercase; }
+.promo-date { font-size: 0.75rem; color: var(--color-text-muted); }
+
+.promo-title { font-size: 1.1rem; color: white; margin-bottom: 0.5rem; }
+.promo-desc { font-size: 0.85rem; color: var(--color-text-sub); margin-bottom: 1.2rem; line-height: 1.5; }
+
+.promo-code-container {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.2rem;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.code-label { display: block; font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 5px; }
+
+.code-box {
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.code-val { font-family: monospace; font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: 1px; }
+
+.btn-copy {
+  background: none; border: none; color: var(--color-primary);
+  cursor: pointer; transition: 0.2s; padding: 5px;
+}
+.btn-copy:hover { transform: scale(1.2); }
+
+.promo-value {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.v-label { font-size: 0.75rem; color: var(--color-text-muted); }
+.v-amount { font-size: 1.2rem; font-weight: 900; color: var(--color-accent); }
+
+@media (max-width: 768px) {
+  .profile-wrapper { grid-template-columns: 1fr; }
+  .profile-sidebar { display: none; }
+  .profile-header { display: block; }
+  .reward-history-grid { grid-template-columns: 1fr; }
 }
 </style>

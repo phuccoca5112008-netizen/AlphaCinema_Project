@@ -43,7 +43,7 @@
                 @click="newReview.diemSo = i">★</span>
             </div>
             <textarea 
-              v-model="newReview.noiDung" 
+              v-model="newReview.binhLuan" 
               placeholder="Chia sẻ cảm nhận của bạn về bộ phim này..." 
               class="custom-textarea mt-2"
               rows="4"></textarea>
@@ -66,15 +66,15 @@
             <div v-for="r in reviews" :key="r.maDanhGia" class="review-card animate-fade-in">
               <div class="rc-header">
                 <div class="rc-user">
-                  <div class="avatar-sm">{{ r.hoTenNguoiDung.charAt(0) }}</div>
-                  <span class="name">{{ r.hoTenNguoiDung }}</span>
+                  <div class="avatar-sm">{{ r.tenNguoiDung.charAt(0) }}</div>
+                  <span class="name">{{ r.tenNguoiDung }}</span>
                 </div>
                 <div class="rc-meta">
                   <span class="rc-rating">⭐ {{ r.diemSo }}</span>
-                  <span class="rc-date">{{ formatDate(r.ngayTao) }}</span>
+                  <span class="rc-date">{{ formatDate(r.ngayDanhGia) }}</span>
                 </div>
               </div>
-              <p class="rc-content">{{ r.noiDung }}</p>
+              <p class="rc-content">{{ r.binhLuan }}</p>
             </div>
           </div>
         </div>
@@ -105,7 +105,7 @@ const submitting = ref(false);
 
 const newReview = ref({
   diemSo: 5,
-  noiDung: ''
+  binhLuan: ''
 });
 
 const formatDate = (dateStr) => {
@@ -140,17 +140,17 @@ const checkEligibility = async () => {
 };
 
 const submitReview = async () => {
-  if (!newReview.value.noiDung.trim()) return alert("Vui lòng nhập nội dung bình luận!");
+  if (!newReview.value.binhLuan.trim()) return alert("Vui lòng nhập nội dung bình luận!");
   submitting.value = true;
   try {
     const res = await movieApi.submitReview({
       maPhim: parseInt(route.params.id),
       diemSo: newReview.value.diemSo,
-      noiDung: newReview.value.noiDung
+      noiDung: newReview.value.binhLuan
     });
     if (res.success) {
       alert("Cảm ơn bạn đã đánh giá!");
-      newReview.value.noiDung = '';
+      newReview.value.binhLuan = '';
       isEligible.value = false;
       hasAlreadyReviewed.value = true;
       await fetchReviews();

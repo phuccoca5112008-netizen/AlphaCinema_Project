@@ -37,17 +37,17 @@
             <tr v-for="inv in invoices" :key="inv.maHoaDon">
               <td class="font-bold">#{{ inv.maHoaDon }}</td>
               <td>
-                <div class="font-bold text-white">{{ inv.tenNguoiDung }}</div>
-                <div class="small-text">{{ inv.email }}</div>
+                <div class="font-bold text-white">{{ inv.tenNguoiDung || inv.hoTenKhachHang || 'Khách vãng lai' }}</div>
+                <div class="small-text">{{ inv.email || 'N/A' }}</div>
               </td>
-              <td>{{ new Date(inv.ngayLap).toLocaleString('vi-VN') }}</td>
-              <td class="text-accent font-bold">{{ inv.tongTien.toLocaleString() }}đ</td>
+              <td>{{ inv.ngayLap ? new Date(inv.ngayLap).toLocaleString('vi-VN') : 'N/A' }}</td>
+              <td class="text-accent font-bold">{{ (inv.tongTien || 0).toLocaleString() }}đ</td>
               <td>
                 <span v-if="inv.maCodeGiamGia" class="vc-badge">{{ inv.maCodeGiamGia }}</span>
                 <span v-else class="small-text">-</span>
               </td>
               <td>
-                <span class="badge badge-success">Đã Thanh Toán</span>
+                <span class="badge badge-success">{{ inv.trangThai || 'Đã Thanh Toán' }}</span>
               </td>
               <td>{{ inv.phuongThucThanhToan }}</td>
             </tr>
@@ -77,7 +77,11 @@ const loadInvoices = async () => {
     const res = await bookingApi.getInvoices();
     if (res.success) {
       // Sort newest first
-      invoices.value = res.data.sort((a,b) => new Date(b.ngayLap) - new Date(a.ngayLap));
+      invoices.value = res.data.sort((a, b) => {
+        const dateA = new Date(a.ngayLap || a.ngayGiaoDich || 0);
+        const dateB = new Date(b.ngayLap || b.ngayGiaoDich || 0);
+        return dateB - dateA;
+      });
     }
   } catch (error) {
     console.error('Lỗi tải hóa đơn:', error);

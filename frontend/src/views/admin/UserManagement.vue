@@ -63,10 +63,7 @@
               <option value="Customer">Customer</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Đổi mật khẩu (Bỏ trống nếu không đổi)</label>
-            <input type="password" v-model="editForm.matKhauMoi" class="form-input" placeholder="Mật khẩu mới" />
-          </div>
+          <!-- Password field removed for security/privacy -->
 
           <div class="modal-actions">
             <button type="button" class="btn btn-outline" @click="showModal = false">Hủy</button>
@@ -111,7 +108,7 @@ const getRoleBadgeClass = (role) => {
 };
 
 const openEdit = (user) => {
-  editForm.value = { ...user, matKhauMoi: '' };
+  editForm.value = { ...user };
   showModal.value = true;
 };
 
@@ -119,8 +116,7 @@ const updateUser = async () => {
   try {
     const res = await adminApi.updateUser(editForm.value.maNguoiDung, {
       hoTen: editForm.value.hoTen,
-      vaiTro: editForm.value.vaiTro,
-      matKhauMoi: editForm.value.matKhauMoi || null
+      vaiTro: editForm.value.vaiTro
     });
     if (res.success) {
       alert('Cập nhật thành công!');

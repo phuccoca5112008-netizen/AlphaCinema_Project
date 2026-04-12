@@ -43,4 +43,6 @@ public class ApDungKhuyenMaiResponse
     public decimal TienGiam { get; set; }
     public decimal TongTienSauGiam { get; set; }
     public string TenKhuyenMai { get; set; } = string.Empty;
+    public int? MaDoAnVatTang { get; set; }
+    public string? TenDoAnVatTang { get; set; }
 }

@@ -82,6 +82,9 @@
       </div>
       <div class="footer-bar">© 2026 Alpha Cinema. All rights reserved.</div>
     </footer>
+
+    <!-- Toasts Global -->
+    <ToastContainer />
   </div>
 </template>
 
@@ -89,6 +92,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from './stores/auth';
 import { useRouter } from 'vue-router';
+import ToastContainer from './components/ToastContainer.vue';
 import logoImg from './assets/logo.svg';
 
 const authStore = useAuthStore();

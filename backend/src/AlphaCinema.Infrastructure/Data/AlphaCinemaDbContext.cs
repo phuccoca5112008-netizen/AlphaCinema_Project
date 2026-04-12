@@ -120,6 +120,9 @@ public class AlphaCinemaDbContext : DbContext
             e.Property(x => x.DonHangToiThieu).HasColumnName("don_hang_toi_thieu").HasColumnType("decimal(18,2)");
             e.Property(x => x.HinhAnh).HasColumnName("hinh_anh").HasMaxLength(255);
             e.Property(x => x.PhanLoai).HasColumnName("phan_loai").HasMaxLength(50);
+            e.Property(x => x.MaDoAnVatTang).HasColumnName("ma_do_an_vat_tang");
+            e.Property(x => x.MaNguoiDung).HasColumnName("ma_nguoi_dung");
+            e.HasOne(x => x.NguoiDung).WithMany().HasForeignKey(x => x.MaNguoiDung).OnDelete(DeleteBehavior.Cascade);
         });
 
         // DanhGia

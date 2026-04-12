@@ -40,38 +40,7 @@
       <button class="hero-arrow right" @click="next">&#8250;</button>
     </section>
 
-    <!-- ═══ QUICK BOOKING BAR ═══ -->
-    <section class="booking-bar-wrap">
-      <div class="container d-flex justify-center">
-        <div class="booking-bar glass-panel balanced-bar">
-          <div class="bar-field d-flex flex-col">
-            <label class="form-label text-center">🎬 Chọn Phim</label>
-            <select v-model="quick.phim" class="form-input text-center-select">
-              <option value="">-- Tất cả phim --</option>
-              <option v-for="p in allPhims" :key="p.maPhim" :value="p.maPhim">{{ p.tenPhim }}</option>
-            </select>
-          </div>
-          <div class="bar-divider"></div>
-          <div class="bar-field d-flex flex-col">
-            <label class="form-label text-center">📅 Chọn Ngày</label>
-            <input type="date" v-model="quick.ngay" class="form-input text-center" :min="todayStr">
-          </div>
-          <div class="bar-divider"></div>
-          <div class="bar-field d-flex flex-col">
-            <label class="form-label text-center">🏠 Rạp / Phòng</label>
-            <select v-model="quick.phong" class="form-input text-center-select">
-              <option value="">-- Tất cả phòng --</option>
-              <option value="IMAX">Phòng IMAX</option>
-              <option value="VIP">Phòng VIP</option>
-              <option value="3D">Phòng 2D/3D</option>
-            </select>
-          </div>
-          <div class="bar-action">
-            <button class="btn btn-primary bar-btn" @click="goBook">MUA VÉ →</button>
-          </div>
-        </div>
-      </div>
-    </section>
+
 
     <!-- ═══ TOP 4 PHIM DOANH THU ═══ -->
     <section class="movies-section container text-center">
@@ -222,16 +191,7 @@ const fallbackImg = (e) => {
   e.target.src = 'https://placehold.co/400x600/1a1a1a/E8882A?text=Alpha+Cinema';
 };
 
-// ─── Quick booking bar ─────────────────────────────────────
-const today = new Date();
-const todayStr = today.toISOString().split('T')[0];
-const quick = ref({ phim: '', ngay: todayStr, phong: '' });
 
-const goBook = () => {
-  let url = '/booking';
-  if (quick.value.phim) url += `?phim=${quick.value.phim}`;
-  router.push(url);
-};
 </script>
 
 <style scoped>
@@ -327,26 +287,7 @@ const goBook = () => {
 .slide-fade-enter-active, .slide-fade-leave-active { transition: opacity 0.6s ease; }
 .slide-fade-enter-from, .slide-fade-leave-to { opacity: 0; }
 
-/* ─── BOOKING BAR ─── */
-.booking-bar-wrap { position: relative; z-index: 10; margin-top: -40px; }
-.booking-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
-  padding: 1.5rem 2rem;
-  background: rgba(18,18,18,0.95);
-}
-.bar-field { flex: 1; min-width: 0; }
-.bar-field .form-label { font-size: 0.8rem; }
-.bar-field .form-input { border-radius: 0; border-right: none; }
-.bar-field:first-child .form-input { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-.bar-divider {
-  width: 1px; height: 44px;
-  background: rgba(255,255,255,0.08);
-  align-self: flex-end;
-}
-.bar-action { flex-shrink: 0; margin-left: 1rem; }
-.bar-btn { height: 44px; padding: 0 2rem; border-radius: var(--radius-sm); font-size: 1rem; letter-spacing: 1px; }
+
 
 /* ─── MOVIES SECTION ─── */
 .movies-section { padding: 4rem 0 2rem; }
@@ -484,11 +425,7 @@ const goBook = () => {
 .mb-5 { margin-bottom: 3rem; }
 
 
-/* ─── BOOKING BAR REFINE ─── */
-.balanced-bar { width: 100%; max-width: 1000px; padding: 2rem 3rem; gap: 1.5rem; }
-.justify-center { justify-content: center; }
-.flex-col { flex-direction: column; }
-.text-center-select { text-align-last: center; }
+
 .centered-header { margin-bottom: 3rem; }
 
 /* ─── MEDALS ─── */

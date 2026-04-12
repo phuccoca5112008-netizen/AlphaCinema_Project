@@ -6,8 +6,12 @@ public class HoaDonResponse
     public decimal TongTien { get; set; }
     public string PhuongThucThanhToan { get; set; } = string.Empty;
     public DateTime NgayGiaoDich { get; set; }
+    public DateTime NgayLap { get; set; }
     public string? TenKhuyenMai { get; set; }
+    public string? MaCodeGiamGia { get; set; }
     public string HoTenKhachHang { get; set; } = string.Empty;
+    public string TenNguoiDung { get; set; } = string.Empty;
+    public string? Email { get; set; }
     public int SoLuongVe { get; set; }
     public string? MaVaoCong { get; set; }
     public string? TrangThai { get; set; }
