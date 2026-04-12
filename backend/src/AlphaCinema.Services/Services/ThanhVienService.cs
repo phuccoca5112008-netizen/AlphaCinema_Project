@@ -48,7 +48,7 @@ public class ThanhVienService : IThanhVienService
         user.DiemTichLuy -= reward.DiemYeuCau;
 
         // Luôn tạo mã KhuyenMai để áp dụng vào hóa đơn
-        var voucherCode = $"REDEEM-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var voucherCode = $"REDEEM-{Guid.NewGuid().ToString("N")[0..8].ToUpper()}";
         
         // Xác định giá trị giảm và món được tặng
         string loaiGiamGia = "SoTien";
@@ -60,11 +60,31 @@ public class ThanhVienService : IThanhVienService
             loaiGiamGia = "PhanTram";
             giaTriGiam = 50;
         }
-        else if (reward.MaPhanThuong == 4) giaTriGiam = 120000; // Vé miễn phí (Coi như giảm tiền mặt cho vé)
-        else if (reward.MaPhanThuong == 1) maDoAnVatTang = 2;   // Bắp L
-        else if (reward.MaPhanThuong == 2) maDoAnVatTang = 5;   // Coca L
-        else if (reward.MaPhanThuong == 5) maDoAnVatTang = 10;  // Combo Single
-        else if (reward.MaPhanThuong == 6) maDoAnVatTang = 11;  // Combo Couple
+        else if (reward.MaPhanThuong == 4) giaTriGiam = 120000; // Vé miễn phí
+        else if (reward.MaPhanThuong == 1) // Bắp Ngọt (M)
+        {
+            var gift = await _context.DoAnVats.FirstOrDefaultAsync(d => d.TenMon.Contains("Bắp") && d.TenMon.Contains("Ngọt"));
+            maDoAnVatTang = gift?.MaDoAnVat;
+            Console.WriteLine($"[REDEEM] Finding gift for Bắp Ngọt (M): Found ID {(maDoAnVatTang?.ToString() ?? "NULL")}");
+        }
+        else if (reward.MaPhanThuong == 2) // Nước L (Coca)
+        {
+            var gift = await _context.DoAnVats.FirstOrDefaultAsync(d => d.TenMon.Contains("Coca") || d.TenMon.Contains("Nước ngọt"));
+            maDoAnVatTang = gift?.MaDoAnVat;
+            Console.WriteLine($"[REDEEM] Finding gift for Coca L: Found ID {(maDoAnVatTang?.ToString() ?? "NULL")}");
+        }
+        else if (reward.MaPhanThuong == 5) // Combo Single
+        {
+            var gift = await _context.DoAnVats.FirstOrDefaultAsync(d => d.TenMon.Contains("Combo") && d.TenMon.Contains("Single"));
+            maDoAnVatTang = gift?.MaDoAnVat;
+            Console.WriteLine($"[REDEEM] Finding gift for Combo Single: Found ID {(maDoAnVatTang?.ToString() ?? "NULL")}");
+        }
+        else if (reward.MaPhanThuong == 6) // Combo Double
+        {
+            var gift = await _context.DoAnVats.FirstOrDefaultAsync(d => d.TenMon.Contains("Combo") && (d.TenMon.Contains("Double") || d.TenMon.Contains("Couple")));
+            maDoAnVatTang = gift?.MaDoAnVat;
+            Console.WriteLine($"[REDEEM] Finding gift for Combo Double: Found ID {(maDoAnVatTang?.ToString() ?? "NULL")}");
+        }
         else if (reward.MaPhanThuong == 7) giaTriGiam = 30000;  // Upgrade
         else if (reward.MaPhanThuong == 8) giaTriGiam = 250000; // Bình nước
 
@@ -83,11 +103,15 @@ public class ThanhVienService : IThanhVienService
         };
         _context.KhuyenMais.Add(km);
         await _context.SaveChangesAsync();
+        
+        // Trả về tên quà tặng để kiểm tra
+        var finalGiftName = maDoAnVatTang.HasValue ? (await _context.DoAnVats.FindAsync(maDoAnVatTang.Value))?.TenMon : null;
+        Console.WriteLine($"[REDEEM] Created Promo {voucherCode} with Gift: {finalGiftName ?? "NONE"}");
 
         return new RedeemResponse 
         { 
             Success = true, 
-            Message = $"Quy đổi thành công {reward.TenPhanThuong}!", 
+            Message = $"Quy đổi thành công {reward.TenPhanThuong} {(finalGiftName != null ? $"(Nhận ngay: {finalGiftName})" : "")}!", 
             GiftCode = voucherCode
         };
     }

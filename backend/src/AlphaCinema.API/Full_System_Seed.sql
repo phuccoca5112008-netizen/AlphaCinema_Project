@@ -10,6 +10,7 @@ GO
 
 -- 0. CLEANUP (Tránh trùng lặp khi chạy lại)
 DELETE FROM Ve;
+DELETE FROM DanhGia;
 DELETE FROM HoaDonDoAnVat;
 DELETE FROM HoaDon;
 DELETE FROM SuatChieu;
@@ -18,7 +19,6 @@ DELETE FROM PhongChieu;
 DELETE FROM Phim;
 DELETE FROM KhuyenMai;
 DELETE FROM DoAnVat;
-DELETE FROM DanhGia;
 DELETE FROM NguoiDung;
 DELETE FROM VaiTro;
 GO
@@ -108,7 +108,8 @@ INSERT INTO DoAnVat (ten_mon, mo_ta, gia, hinh_anh, loai) VALUES
 (N'Bắp Rang Ngọt (M)', N'Bắp thơm ngon size vừa', 45000, '/assets/concessions/bap_caramel_m.png', N'Bắp'),
 (N'Bắp Rang Phô Mai (L)', N'Bắp mặn phô mai size lớn', 60000, '/assets/concessions/bap_phomai_l.png', N'Bắp'),
 (N'Coca Cola (L)', N'Nước ngọt ga mạnh', 35000, '/assets/concessions/coca_l.png', N'Nước'),
-(N'Combo Single Alpha', N'1 Bắp (M) + 1 Nước (L)', 80000, '/assets/concessions/combo_single.png', N'Combo');
+(N'Combo Single Alpha', N'1 Bắp (M) + 1 Nước (L)', 80000, '/assets/concessions/combo_single.png', N'Combo'),
+(N'Combo Double Alpha', N'1 Bắp (L) + 2 Nước (L)', 115000, '/assets/concessions/combo_double.png', N'Combo');
 GO
 
 -- 6. KHUYẾN MÃI (Promotions)

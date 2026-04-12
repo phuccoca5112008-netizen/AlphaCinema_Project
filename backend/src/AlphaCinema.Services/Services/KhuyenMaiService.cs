@@ -48,10 +48,11 @@ public class KhuyenMaiService : IKhuyenMaiService
         decimal tongTienSauGiam = request.TongTienGoc - tienGiam;
         if (tongTienSauGiam < 0) tongTienSauGiam = 0;
 
+        // Trả về tên quà tặng kèm (nếu có)
         string? tenDoAnVatTang = null;
         if (km.MaDoAnVatTang.HasValue)
         {
-            var doAn = await _context.DoAnVats.FindAsync(km.MaDoAnVatTang.Value);
+            var doAn = await _context.DoAnVats.FirstOrDefaultAsync(d => d.MaDoAnVat == km.MaDoAnVatTang.Value);
             tenDoAnVatTang = doAn?.TenMon;
         }
 

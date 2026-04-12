@@ -831,11 +831,7 @@ const handlePaymentSuccess = async () => {
           ...selectedConcessionItems.value.map(c => ({
               maDoAnVat: c.maDoAnVat,
               soLuong: c.soLuong
-          })),
-          ...(freeGiftItem.value ? [{
-              maDoAnVat: freeGiftItem.value.maDoAnVat,
-              soLuong: 1
-          }] : [])
+          }))
       ]
     });
     if (res.success) {

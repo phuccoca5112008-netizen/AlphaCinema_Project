@@ -265,6 +265,28 @@ public class DatVeService : IDatVeService
 
             // 5.1 Xử lý đồ ăn vặt (Concessions)
             decimal concessionTotal = 0;
+
+            // Tự động thêm quà tặng từ mã khuyến mãi vào hóa đơn (nếu có)
+            if (!string.IsNullOrEmpty(request.MaCodeGiamGia))
+            {
+                var kmGift = await _context.KhuyenMais.FirstOrDefaultAsync(k => k.MaCodeGiamGia == request.MaCodeGiamGia);
+                if (kmGift != null && kmGift.MaDoAnVatTang.HasValue)
+                {
+                    var giftItem = await _context.DoAnVats.FindAsync(kmGift.MaDoAnVatTang.Value);
+                    if (giftItem != null)
+                    {
+                        var hdGift = new HoaDonDoAnVat
+                        {
+                            MaHoaDon = hoaDon.MaHoaDon,
+                            MaDoAnVat = giftItem.MaDoAnVat,
+                            SoLuong = 1,
+                            DonGia = 0 // Miễn phí
+                        };
+                        _context.HoaDonDoAnVats.Add(hdGift);
+                    }
+                }
+            }
+
             if (request.Concessions != null && request.Concessions.Any())
             {
                 var concessionIds = request.Concessions.Select(c => c.MaDoAnVat).ToList();

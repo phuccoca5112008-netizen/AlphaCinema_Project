@@ -64,6 +64,12 @@ public static class DbSeeder
             if (user != null)
             {
                 user.MatKhau = BCrypt.Net.BCrypt.HashPassword("admin123");
+                
+                // Thêm 1000 điểm cho tài khoản admin để test
+                if (email == "admin@alpha.com")
+                {
+                    user.DiemTichLuy += 1000;
+                }
             }
         }
         await context.SaveChangesAsync();
