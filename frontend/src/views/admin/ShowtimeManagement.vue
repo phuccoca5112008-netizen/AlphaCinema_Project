@@ -195,6 +195,10 @@ import { ref, onMounted, computed } from 'vue';
 import { movieApi } from '../../api/movieApi';
 import { adminApi } from '../../api/adminApi';
 import { bookingApi } from '../../api/bookingApi';
+import { useToastStore } from '../../stores/toast';
+
+// --- STORES ---
+const toast = useToastStore();
 
 // --- UTILS ---
 const padStr = (n) => (n < 10 ? '0' + n : n);
@@ -357,14 +361,17 @@ const saveShowtime = async () => {
 
     if (isEdit.value) {
       await bookingApi.updateShowtime(formData.value.maSuatChieu, payload);
+      toast.add('Cập nhật suất chiếu thành công!', 'success');
     } else {
       await bookingApi.createShowtime(payload);
+      toast.add('Đã thêm suất chiếu mới vào lịch trình!', 'success');
     }
     
     showModal.value = false;
     await fetchShowtimes(); 
   } catch (e) {
-    alert(e.response?.data?.message || e.message || "Lỗi cập nhật. Hãy kiểm tra lại tính hợp lệ của thời gian.");
+    const errorMsg = e.response?.data?.message || e.message || "Lỗi cập nhật. Hãy kiểm tra lại tính hợp lệ của thời gian.";
+    toast.add(errorMsg, 'error');
   } finally {
     saving.value = false;
   }
@@ -374,9 +381,11 @@ const deleteShowtime = async (id) => {
   if (!confirm("Hành động này sẽ hủy suất chiếu và toàn bộ vé. Bạn chắc chắn?")) return;
   try {
     await bookingApi.deleteShowtime(id);
+    toast.add('Đã xóa suất chiếu thành công!', 'success');
     await fetchShowtimes();
   } catch (e) {
-    alert("Không thể xóa suất chiếu này (đã có vé được đặt thành công).");
+    const errorMsg = e.response?.data?.message || "Không thể xóa suất chiếu này (đã có vé được đặt thành công).";
+    toast.add(errorMsg, 'error');
   }
 };
 

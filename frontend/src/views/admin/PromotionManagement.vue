@@ -121,7 +121,7 @@
 
             <div class="field">
               <label>Loại Giảm Giá</label>
-              <select v-model="form.loaiGiamGia" class="form-select-custom">
+              <select v-model="form.loaiGiamGia" class="form-select-custom" :disabled="isEdit">
                 <option value="PhanTram">Giảm theo %</option>
                 <option value="CoDinh">Giảm tiền mặt (đ)</option>
               </select>
@@ -129,12 +129,12 @@
 
             <div class="field">
               <label>Giá Trị Giảm</label>
-              <input type="number" v-model="form.giaTriGiam" min="1" required />
+              <input type="number" v-model="form.giaTriGiam" min="1" required :disabled="isEdit" />
             </div>
 
             <div class="field">
               <label>Giảm Tối Đa (VNĐ)</label>
-              <input type="number" v-model="form.giamToiDa" placeholder="Không giới hạn" />
+              <input type="number" v-model="form.giamToiDa" placeholder="Không giới hạn" :disabled="isEdit" />
             </div>
 
             <div class="field">
@@ -224,6 +224,12 @@ const openForm = (km = null) => {
 };
 
 const savePromotion = async () => {
+  const confirmMsg = isEdit.value 
+    ? "Bạn có chắc chắn muốn cập nhật các thông tin cho ưu đãi này?" 
+    : "Xác nhận đăng ưu đãi mới? \n\nLưu ý: Sau khi đăng, bạn sẽ KHÔNG thể thay đổi Loại giảm giá, Giá trị giảm và Mức giảm tối đa để đảm bảo tính minh bạch cho khách hàng.";
+    
+  if (!confirm(confirmMsg)) return;
+
   try {
     let res;
     if (isEdit.value) {

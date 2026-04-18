@@ -477,7 +477,7 @@ onMounted(() => {
 }
 .stepper input { 
   background: none; border: none; width: 40px; text-align: center; color: white; 
-  font-weight: 700; -moz-appearance: textfield; 
+  font-weight: 700; -moz-appearance: textfield; appearance: none;
 }
 
 .stats-panel { display: flex; justify-content: space-around; align-items: center; padding: 1rem; }

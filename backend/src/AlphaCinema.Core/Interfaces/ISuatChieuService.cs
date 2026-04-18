@@ -10,4 +10,5 @@ public interface ISuatChieuService
     Task<SuatChieuResponse> CreateAsync(CreateSuatChieuRequest request);
     Task<SuatChieuResponse> UpdateAsync(int id, UpdateSuatChieuRequest request);
     Task DeleteAsync(int id);
+    Task CleanupOldSuatChieuAsync();
 }

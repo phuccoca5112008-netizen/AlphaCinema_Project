@@ -13,15 +13,18 @@ public class SuatChieuService : ISuatChieuService
 
     public async Task<IEnumerable<SuatChieuResponse>> GetAllAsync(int? maPhim = null, DateTime? ngay = null)
     {
+        // Tự động dọn dẹp các suất chiếu cũ trước khi lấy danh sách (để tiết kiệm dung lượng)
+        await CleanupOldSuatChieuAsync();
+
         var query = _context.SuatChieus
             .Include(s => s.Phim).Include(s => s.PhongChieu).Include(s => s.Ves)
             .AsQueryable();
 
-        if (maPhim.HasValue) query = query.Where(s => s.MaPhim == maPhim.Value);
-        if (ngay.HasValue) query = query.Where(s => s.ThoiGianBatDau.Date == ngay.Value.Date);
+        // Nếu không truyền ngày, mặc định lấy ngày hôm nay
+        DateTime targetDate = ngay?.Date ?? DateTime.Today;
+        query = query.Where(s => s.ThoiGianBatDau.Date == targetDate);
 
-        var totalGhes = await _context.Ghes.GroupBy(g => g.MaPhong)
-            .ToDictionaryAsync(g => g.Key, g => g.Count());
+        if (maPhim.HasValue) query = query.Where(s => s.MaPhim == maPhim.Value);
 
         return await query.Select(s => new SuatChieuResponse
         {
@@ -117,7 +120,7 @@ public class SuatChieuService : ISuatChieuService
                 (endTime > sStart && endTime <= sEnd) ||
                 (startTime <= sStart && endTime >= sEnd))
             {
-                throw new Exception($"Trùng lịch chiếu! Phòng này đang có phim '{s.Phim.TenPhim}' chiếu từ {sStart:HH:mm} đến {sEnd:HH:mm} (Bao gồm dọn phòng).");
+                throw new ArgumentException($"Trùng lịch chiếu! {s.PhongChieu.TenPhong} đang bận chiếu phim '{s.Phim.TenPhim}' từ {sStart:HH:mm} đến {sEnd:HH:mm} (bao gồm dọn phòng).");
             }
         }
 
@@ -173,7 +176,7 @@ public class SuatChieuService : ISuatChieuService
                 (endTime > sStart && endTime <= sEnd) ||
                 (startTime <= sStart && endTime >= sEnd))
             {
-                throw new Exception($"Trùng lịch! Phòng này đang bận từ {sStart:HH:mm} đến {sEnd:HH:mm} (Phim {s.Phim.TenPhim}).");
+                throw new ArgumentException($"Trùng lịch! {s.PhongChieu.TenPhong} đang bận chiếu từ {sStart:HH:mm} đến {sEnd:HH:mm} (Phim {s.Phim.TenPhim}).");
             }
         }
 
@@ -210,5 +213,31 @@ public class SuatChieuService : ISuatChieuService
 
         _context.SuatChieus.Remove(sc);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task CleanupOldSuatChieuAsync()
+    {
+        var yesterday = DateTime.Today.AddDays(-1);
+        
+        // Tìm các suất chiếu của ngày hôm qua trở về trước
+        var oldShows = await _context.SuatChieus
+            .Include(s => s.Ves)
+            .Where(s => s.ThoiGianBatDau.Date <= yesterday)
+            .ToListAsync();
+
+        if (oldShows.Any())
+        {
+            // Khi xóa SuatChieu, EF Core sẽ tự động xóa các Ve liên quan nếu được cấu hình Cascade Delete
+            // Hoặc chúng ta có thể xóa thủ công ở đây để chắc chắn
+            foreach (var show in oldShows)
+            {
+                if (show.Ves.Any())
+                {
+                    _context.Ves.RemoveRange(show.Ves);
+                }
+            }
+            _context.SuatChieus.RemoveRange(oldShows);
+            await _context.SaveChangesAsync();
+        }
     }
 }
