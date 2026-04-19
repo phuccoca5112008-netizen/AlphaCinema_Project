@@ -572,6 +572,7 @@ onBeforeUnmount(() => {
   margin-bottom: 1rem;
   background: linear-gradient(to bottom, #fff, #bbb);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

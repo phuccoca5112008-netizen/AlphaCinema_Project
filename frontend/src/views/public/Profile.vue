@@ -128,6 +128,7 @@
                 <div class="spinner-large"></div>
                 <p>Đang tìm dữ liệu vé của bạn...</p>
               </div>
+              
 
               <div v-else class="history-grid">
                 <div v-if="invoices.length === 0" class="empty-state glass-panel">
