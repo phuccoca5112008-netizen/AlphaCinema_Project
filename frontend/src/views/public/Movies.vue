@@ -23,7 +23,8 @@
           <img :src="phim.poster || 'https://via.placeholder.com/400x600/1e1e2d/9aa0a6?text=No+Poster'" alt="Poster" class="poster">
           <div class="overlay">
             <router-link :to="'/movies/' + phim.maPhim" class="btn btn-outline" style="border-color: white; color: white;">Chi Tiết</router-link>
-            <router-link :to="`/booking?phim=${phim.maPhim}`" class="btn btn-primary" style="margin-top: 1rem;">Đặt Vé</router-link>
+            <router-link v-if="phim.trangThaiPhim === 'Đang chiếu'" :to="`/booking?phim=${phim.maPhim}`" class="btn btn-primary" style="margin-top: 1rem;">Đặt Vé</router-link>
+            <button v-else class="btn btn-outline" style="margin-top: 1rem; opacity: 0.5; cursor: not-allowed; border-color: #888; color: #888;">Sắp Chiếu</button>
           </div>
         </div>
         <div class="info">

@@ -22,7 +22,9 @@ public class SuatChieuService : ISuatChieuService
 
         // Nếu không truyền ngày, mặc định lấy ngày hôm nay
         DateTime targetDate = ngay?.Date ?? DateTime.Today;
-        query = query.Where(s => s.ThoiGianBatDau.Date == targetDate);
+        query = query.Where(s => s.ThoiGianBatDau.Year == targetDate.Year 
+                              && s.ThoiGianBatDau.Month == targetDate.Month 
+                              && s.ThoiGianBatDau.Day == targetDate.Day);
 
         if (maPhim.HasValue) query = query.Where(s => s.MaPhim == maPhim.Value);
 
@@ -107,7 +109,11 @@ public class SuatChieuService : ISuatChieuService
         var dateDate = request.ThoiGianBatDau.Date;
         var existingShows = await _context.SuatChieus
             .Include(s => s.Phim)
-            .Where(s => s.MaPhong == request.MaPhong && s.ThoiGianBatDau.Date == dateDate)
+            .Include(s => s.PhongChieu)
+            .Where(s => s.MaPhong == request.MaPhong 
+                     && s.ThoiGianBatDau.Year == dateDate.Year
+                     && s.ThoiGianBatDau.Month == dateDate.Month
+                     && s.ThoiGianBatDau.Day == dateDate.Day)
             .ToListAsync();
 
         foreach (var s in existingShows)
@@ -138,7 +144,7 @@ public class SuatChieuService : ISuatChieuService
         }
         catch (Exception ex)
         {
-            throw new Exception("Lỗi cơ sở dữ liệu khi tạo suất chiếu: " + ex.InnerException?.Message ?? ex.Message);
+            throw new Exception("Lỗi cơ sở dữ liệu khi tạo suất chiếu: " + (ex.InnerException?.Message ?? ex.Message));
         }
     }
 
@@ -164,7 +170,12 @@ public class SuatChieuService : ISuatChieuService
         var dateDate = startTime.Date;
         var existingShows = await _context.SuatChieus
             .Include(s => s.Phim)
-            .Where(s => s.MaPhong == (request.MaPhong ?? sc.MaPhong) && s.ThoiGianBatDau.Date == dateDate && s.MaSuatChieu != id)
+            .Include(s => s.PhongChieu)
+            .Where(s => s.MaPhong == (request.MaPhong ?? sc.MaPhong) 
+                     && s.ThoiGianBatDau.Year == dateDate.Year
+                     && s.ThoiGianBatDau.Month == dateDate.Month
+                     && s.ThoiGianBatDau.Day == dateDate.Day
+                     && s.MaSuatChieu != id)
             .ToListAsync();
 
         foreach (var s in existingShows)

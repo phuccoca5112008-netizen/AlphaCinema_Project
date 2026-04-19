@@ -15,9 +15,12 @@
               <h1 class="hero-title">{{ slides[currentSlide].title }}</h1>
               <p class="hero-desc">{{ slides[currentSlide].desc }}</p>
               <div class="hero-actions">
-                <router-link :to="'/booking?phim=' + slides[currentSlide].id" class="btn btn-primary">
+                <router-link v-if="allPhims.find(p => p.maPhim === slides[currentSlide].id)?.trangThaiPhim !== 'Sắp chiếu'" :to="'/booking?phim=' + slides[currentSlide].id" class="btn btn-primary">
                   🎟 Mua Vé Ngay
                 </router-link>
+                <button v-else class="btn btn-outline" style="opacity: 0.6; cursor: not-allowed; color: #888; border-color: #888;">
+                  🔔 Sắp Chiếu
+                </button>
                 <router-link :to="'/movies/' + slides[currentSlide].id" class="btn btn-outline border-white">
                   Xem Chi Tiết
                 </router-link>
@@ -67,7 +70,8 @@
           <div class="mcard-poster">
             <img :src="phim.poster" :alt="phim.tenPhim" class="mcard-img" @error="fallbackImg">
             <div class="mcard-overlay">
-              <router-link :to="'/booking?phim=' + phim.maPhim" class="btn btn-primary" @click.stop>🎟 Mua Vé</router-link>
+              <router-link v-if="phim.trangThaiPhim === 'Đang chiếu'" :to="'/booking?phim=' + phim.maPhim" class="btn btn-primary" @click.stop>🎟 Mua Vé</router-link>
+              <button v-else class="btn btn-outline" style="border-color: white; color: white; opacity: 0.8; cursor: default;" @click.stop>Sắp Chiếu</button>
             </div>
             <div class="mcard-badge">{{ phim.thoiLuong }}p</div>
           </div>

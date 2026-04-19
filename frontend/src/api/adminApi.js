@@ -14,6 +14,10 @@ export const adminApi = {
   updateRoom: (id, data) => api.put(`/phong-chieu/${id}`, data),
   deleteRoom: (id) => api.delete(`/phong-chieu/${id}`),
   
+  // Seat Management
+  generateSeats: (id, data) => api.post(`/phong-chieu/${id}/ghe/generate`, data),
+  updateSeat: (id, data) => api.put(`/phong-chieu/ghe/${id}`, data),
+  
   // Statistics/Dashboard
   getRevenueStats: (tuNgay, denNgay) => api.get(`/hoa-don/doanh-thu?tuNgay=${tuNgay}&denNgay=${denNgay}`),
 };

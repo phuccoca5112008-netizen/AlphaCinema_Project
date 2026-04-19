@@ -328,21 +328,24 @@ const deleteRoom = async (id) => {
 const generateSeats = async () => {
   try {
     const payload = { soHang: genRows.value, soGheMotHang: genCols.value };
-    const res = await api.post(`/phong-chieu/${selectedRoom.value.maPhong}/ghe/generate`, payload);
+    const res = await adminApi.generateSeats(selectedRoom.value.maPhong, payload);
     if (res.success) {
-      selectRoom(selectedRoom.value.maPhong);
+      await selectRoom(selectedRoom.value.maPhong);
     }
-  } catch(e) { alert('Lỗi: ' + e.message); }
+  } catch(e) { 
+    console.error('Lỗi tạo ghế:', e);
+    alert('Lỗi: ' + (e.response?.data?.message || e.message)); 
+  }
 };
 
 const toggleSeatType = async (seat) => {
   const newType = seat.loaiGhe === 'VIP' ? 'Thuong' : 'VIP';
   try {
-    const res = await api.put(`/phong-chieu/ghe/${seat.maGhe}`, { loaiGhe: newType });
+    const res = await adminApi.updateSeat(seat.maGhe, { loaiGhe: newType });
     if (res.success) {
       seat.loaiGhe = newType;
     }
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error('Lỗi đổi loại ghế:', e); }
 };
 
 const seatMatrix = computed(() => {

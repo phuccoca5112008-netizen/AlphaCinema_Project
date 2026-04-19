@@ -120,11 +120,25 @@
         <div class="modal-root" v-if="showModal" @click.self="showModal = false">
           <div class="modal-dialog glass-panel animate-modal">
             <div class="modal-header">
-              <h2 class="gradient-text">
-                <i class="fas" :class="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
-                {{ isEdit ? 'Cập Nhật Suất Chiếu' : 'Tạo Suất Chiếu Mới' }}
-              </h2>
+                <h2 class="modal-title">
+                  <i class="fas" :class="isEdit ? 'fa-edit' : 'fa-plus-circle'"></i>
+                  {{ isEdit ? 'Cập Nhật Suất Chiếu' : 'Tạo Suất Chiếu Mới' }}
+                </h2>
               <button class="close-btn" @click="showModal = false">&times;</button>
+            </div>
+
+            <!-- Notification Row (Full Width) -->
+            <div class="modal-notifications" v-if="modalError || modalSuccess">
+                <div v-if="modalError" class="modal-alert modal-alert-error animate-shake">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span>{{ modalError }}</span>
+                  <button @click="modalError = ''" class="close-alert">&times;</button>
+                </div>
+                <div v-if="modalSuccess" class="modal-alert modal-alert-success animate-in">
+                  <i class="fas fa-check-circle"></i>
+                  <span>{{ modalSuccess }}</span>
+                  <button @click="modalSuccess = ''" class="close-alert">&times;</button>
+                </div>
             </div>
             
             <form @submit.prevent="saveShowtime" class="modal-body">
@@ -133,7 +147,9 @@
                   <label class="form-label">Phim</label>
                   <select v-model="formData.maPhim" class="form-input" required>
                     <option value="" disabled>Chọn phim...</option>
-                    <option v-for="p in phims" :key="p.maPhim" :value="p.maPhim">{{ p.tenPhim }}</option>
+                    <option v-for="phim in dangChieuPhims" :key="phim.maPhim" :value="phim.maPhim">
+                      {{ phim.tenPhim }} {{ phim.trangThaiPhim === 'Sắp chiếu' ? '(Sắp chiếu)' : '' }}
+                    </option>
                   </select>
                 </div>
                 <div class="form-group flex-1">
@@ -147,8 +163,15 @@
               
               <div class="form-row mt-4">
                 <div class="form-group flex-1">
-                  <label class="form-label">Thời Gian & Ngày Chiếu</label>
-                  <input type="datetime-local" v-model="formData.thoiGianBatDau" class="form-input" required>
+                  <label class="form-label">Ngày Chiếu</label>
+                  <input type="date" v-model="formData.datePart" class="form-input" required>
+                </div>
+                <div class="form-group" style="width: 140px;">
+                  <label class="form-label">Giở Chiếu (24h)</label>
+                  <select v-model="formData.timePart" class="form-input" required>
+                    <option v-for="h in 24" :key="'h'+(h-1)" :value="padStr(h-1) + ':00'">{{ padStr(h-1) }}:00</option>
+                    <option v-for="h in 24" :key="'m'+(h-1)" :value="padStr(h-1) + ':30'">{{ padStr(h-1) }}:30</option>
+                  </select>
                 </div>
                 <div class="form-group" style="width: 140px;">
                   <label class="form-label">Định Dạng</label>
@@ -157,6 +180,17 @@
                     <option value="3D">3D</option>
                     <option value="IMAX">IMAX</option>
                   </select>
+                </div>
+              </div>
+              
+              <!-- NEW: Dynamic End Time Preview -->
+              <div v-if="formData.maPhim && formData.timePart" class="end-time-preview animate-in">
+                <div class="preview-item">
+                  <i class="fas fa-clock"></i>
+                  <span>Dự kiến kết thúc: <strong>{{ calculatedEndTime }}</strong></span>
+                </div>
+                <div class="preview-note">
+                  (Đã bao gồm thời lượng phim + 15 phút dọn phòng)
                 </div>
               </div>
               
@@ -220,6 +254,17 @@ const phims = ref([]);
 const rooms = ref([]);
 const loading = ref(true);
 const saving = ref(false);
+const modalError = ref('');
+const modalSuccess = ref('');
+
+// Computed list of "Now Showing" movies for the dropdown
+const dangChieuPhims = computed(() => {
+  return phims.value.filter(p => {
+    // Luôn hiện phim đang chọn nếu đang ở chế độ Edit (Trường hợp đặc biệt)
+    if (isEdit.value && p.maPhim === formData.value.maPhim) return true;
+    return p.trangThaiPhim === 'Đang chiếu';
+  });
+});
 
 const filterPhim = ref('');
 const filterRoom = ref('');
@@ -228,6 +273,22 @@ const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const showModal = ref(false);
 const isEdit = ref(false);
 const formData = ref({});
+
+// --- COMPUTED: Calculate End Time Preview ---
+const calculatedEndTime = computed(() => {
+  if (!formData.value.maPhim || !formData.value.timePart) return '';
+  
+  const movie = phims.value.find(p => p.maPhim === formData.value.maPhim);
+  if (!movie) return '';
+
+  const [hours, minutes] = formData.value.timePart.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes + movie.thoiLuong + 15; // Phim + 15p dọn dẹp
+  
+  const endHours = Math.floor(totalMinutes / 60) % 24;
+  const endMins = totalMinutes % 60;
+  
+  return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+});
 
 // --- LIFE CYCLE ---
 onMounted(async () => {
@@ -323,26 +384,30 @@ const filteredGroups = computed(() => {
 
 // --- MODAL & ACTIONS ---
 const handleOpenModal = (item = null) => {
+  modalError.value = ''; // Reset errors
+  modalSuccess.value = '';
   if (item) {
+    const d = new Date(item.thoiGianBatDau);
     isEdit.value = true;
     formData.value = {
       maSuatChieu: item.maSuatChieu,
       maPhim: item.maPhim,
       maPhong: item.maPhong,
-      thoiGianBatDau: toISOStringForInput(item.thoiGianBatDau),
+      datePart: item.thoiGianBatDau.split('T')[0],
+      timePart: padStr(d.getHours()) + ':' + padStr(d.getMinutes()),
       giaVeGoc: item.giaVeGoc,
       dinhDang: item.dinhDang
     };
   } else {
     isEdit.value = false;
-    const nextHour = new Date();
-    nextHour.setDate(nextHour.getDate() + 1);
-    nextHour.setHours(19, 0, 0, 0);
-
+    const nextDay = new Date();
+    nextDay.setDate(nextDay.getDate() + 1);
+    
     formData.value = { 
       maPhim: phims.value.length > 0 ? phims.value[0].maPhim : '', 
       maPhong: rooms.value.length > 0 ? rooms.value[0].maPhong : '', 
-      thoiGianBatDau: toISOStringForInput(nextHour), 
+      datePart: nextDay.toISOString().split('T')[0],
+      timePart: '19:00',
       giaVeGoc: 80000, 
       dinhDang: '2D' 
     };
@@ -353,25 +418,36 @@ const handleOpenModal = (item = null) => {
 const saveShowtime = async () => {
   if (saving.value) return;
   saving.value = true;
+  modalError.value = '';
+  modalSuccess.value = '';
+  
   try {
+    const fullIso = `${formData.value.datePart}T${formData.value.timePart}:00`;
     const payload = { 
       ...formData.value, 
-      thoiGianBatDau: new Date(formData.value.thoiGianBatDau).toISOString() 
+      thoiGianBatDau: fullIso
     };
 
+    let res;
     if (isEdit.value) {
-      await bookingApi.updateShowtime(formData.value.maSuatChieu, payload);
-      toast.add('Cập nhật suất chiếu thành công!', 'success');
+      res = await bookingApi.updateShowtime(formData.value.maSuatChieu, payload);
     } else {
-      await bookingApi.createShowtime(payload);
-      toast.add('Đã thêm suất chiếu mới vào lịch trình!', 'success');
+      res = await bookingApi.createShowtime(payload);
     }
-    
-    showModal.value = false;
-    await fetchShowtimes(); 
+
+    if (res.success) {
+      modalSuccess.value = isEdit.value ? 'Cập nhật suất chiếu thành công!' : 'Tạo suất chiếu mới thành công!';
+      await fetchShowtimes();
+      setTimeout(() => {
+        showModal.value = false;
+        modalSuccess.value = '';
+      }, 1500);
+    } else {
+      modalError.value = res.message || "Có lỗi xảy ra khi lưu dữ liệu.";
+    }
   } catch (e) {
-    const errorMsg = e.response?.data?.message || e.message || "Lỗi cập nhật. Hãy kiểm tra lại tính hợp lệ của thời gian.";
-    toast.add(errorMsg, 'error');
+    console.error("Save error:", e);
+    modalError.value = e.response?.data?.message || e.message || "Lỗi cập nhật. Hãy kiểm tra lại tính hợp lệ của thời gian.";
   } finally {
     saving.value = false;
   }
@@ -393,7 +469,8 @@ const deleteShowtime = async (id) => {
 const formatTime = (iso) => {
   if (!iso) return '--:--';
   const d = new Date(iso);
-  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+  // Đảm bảo hiển thị chuẩn 24h (HH:mm)
+  return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
 };
 
 const calculateOccupancy = (s) => {
@@ -508,7 +585,77 @@ const getStatusLabel = (s) => {
 .unit-text { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); opacity: 0.4; font-weight: 700; }
 .alert-box { background: rgba(52,152,219,0.05); border: 1px solid rgba(52,152,219,0.2); padding: 1.25rem; border-radius: 12px; color: #3498db; font-size: 0.85rem; display: flex; gap: 12px; align-items: center; }
 
+.modal-notifications { padding: 0 30px; }
+
+.modal-alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  position: relative;
+  width: 100%;
+}
+
+.modal-alert-error {
+  background: rgba(231, 76, 60, 0.1);
+  border-left: 4px solid #e74c3c;
+  color: #e74c3c;
+}
+
+.modal-alert-success {
+  background: rgba(46, 204, 113, 0.1);
+  border-left: 4px solid #2ecc71;
+  color: #2ecc71;
+}
+
+.modal-alert .close-alert {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-left: auto;
+  opacity: 0.6;
+}
+.modal-alert .close-alert:hover { opacity: 1; }
+
+/* End Time Preview */
+.end-time-preview {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  background: rgba(232, 136, 42, 0.05);
+  border: 1px dashed rgba(232, 136, 42, 0.2);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primary);
+  font-size: 0.95rem;
+}
+.preview-item strong { font-size: 1.1rem; }
+.preview-note {
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+  padding-left: 26px;
+}
+
 /* Animations */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.animate-shake { animation: shake 0.3s ease-in-out 2; }
 .animate-in { animation: fadeInScale 0.6s ease-out forwards; }
 @keyframes fadeInScale { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 

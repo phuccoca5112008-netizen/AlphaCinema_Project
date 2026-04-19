@@ -656,24 +656,31 @@ const filteredPhims = computed(() => {
   return allPhims.value.filter(p => p.tenPhim.toLowerCase().includes(q));
 });
 
-// ─── Select movie & load showtimes ───
-const selectPhim = async (p) => {
-  selectedPhim.value = p;
+const fetchSuatChieus = async () => {
+  if (!selectedPhim.value || !selectedDate.value) return;
+  
   selectedSuat.value = null;
-  pickedSeats.value  = [];
-  allSuats.value     = [];
   loadingSuat.value  = true;
   try {
-    const res = await bookingApi.getShowtimes({ maPhim: p.maPhim });
+    // Luôn lấy suất chiếu theo đúng Ngày và Phim đã chọn
+    const res = await bookingApi.getShowtimes({ 
+      maPhim: selectedPhim.value.maPhim,
+      ngay: selectedDate.value 
+    });
     if (res.success) allSuats.value = res.data;
   } catch(e){ console.error(e); }
   finally { loadingSuat.value = false; }
 };
 
+const selectPhim = async (p) => {
+  selectedPhim.value = p;
+  await fetchSuatChieus();
+};
+
 // ─── Suất theo định dạng (2D, 3D, ...) ───
 const suatByFormat = computed(() => {
   const filtered = allSuats.value.filter(s => {
-    const d = new Date(s.thoiGianBatDau).toISOString().split('T')[0];
+    const d = s.thoiGianBatDau.split('T')[0];
     return d === selectedDate.value;
   });
 
@@ -696,7 +703,9 @@ const selectSuat = async (s) => {
 };
 
 // ─── Watch date change ───
-watch(selectedDate, () => { selectedSuat.value = null; });
+watch(selectedDate, () => { 
+  fetchSuatChieus();
+});
 
 // ─── Step 2: Load seats ───
 watch(step, async (v) => {
@@ -951,7 +960,7 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
 .check-badge { position: absolute; top: 12px; right: 12px; background: var(--color-primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
 .phim-info { margin-top: 1rem; }
-.phim-name { font-size: 1rem; font-weight: 800; line-height: 1.4; margin-bottom: 0.5rem; height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.phim-name { font-size: 1rem; font-weight: 800; line-height: 1.4; margin-bottom: 0.5rem; height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
 .phim-tags { display: flex; gap: 0.5rem; }
 .tag { font-size: 0.7rem; font-weight: 700; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: #888; }
 .tag.limit { color: #ff3366; background: rgba(255, 51, 102, 0.1); }
@@ -1213,6 +1222,7 @@ const formatDate = (dt) => dt ? new Date(dt).toLocaleDateString('vi-VN', { weekd
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   flex: 1;
 }
