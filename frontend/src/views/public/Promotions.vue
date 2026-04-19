@@ -152,19 +152,21 @@ const loadPromotions = async () => {
   try {
     const res = await promotionApi.getPromotions();
     if (res.success) {
-      promotions.value = res.data.map(p => ({
-        id: p.maKhuyenMai,
-        title: p.tenKhuyenMai,
-        description: p.moTa?.substring(0, 100) + (p.moTa?.length > 100 ? '...' : ''),
-        fullDescription: p.moTa,
-        // Dùng return trực tiếp gán vào image
-        image: getImageUrl(p.hinhAnh),
-        startDate: formatDate(p.ngayBatDau),
-        endDate: formatDate(p.ngayKetThuc),
-        tag: p.phanLoai || 'ƯU ĐÃI',
-        type: mapType(p.phanLoai),
-        voucher: p.maCodeGiamGia
-      }));
+      promotions.value = res.data
+        .filter(p => p.conHieuLuc) // Chỉ hiện mã đang hiệu lực
+        .map(p => ({
+          id: p.maKhuyenMai,
+          // ... rest of mapping
+          title: p.tenKhuyenMai,
+          description: p.moTa?.substring(0, 100) + (p.moTa?.length > 100 ? '...' : ''),
+          fullDescription: p.moTa,
+          image: getImageUrl(p.hinhAnh),
+          startDate: formatDate(p.ngayBatDau),
+          endDate: formatDate(p.ngayKetThuc),
+          tag: p.phanLoai || 'ƯU ĐÃI',
+          type: mapType(p.phanLoai),
+          voucher: p.maCodeGiamGia
+        }));
     }
   } catch (error) {
     console.error('Lỗi tải khuyến mãi:', error);

@@ -18,8 +18,12 @@
         <span class="value">{{ promotions.length }}</span>
       </div>
       <div class="mini-stat glass-panel">
-        <span class="label">Đang hiệu lực</span>
-        <span class="value text-success-bright">{{ promotions.filter(p => p.conHieuLuc).length }}</span>
+        <span class="label">Đang chạy</span>
+        <span class="value text-success-bright">{{ promotions.filter(p => getStatus(p) === 'active').length }}</span>
+      </div>
+      <div class="mini-stat glass-panel">
+        <span class="label">Chờ công bố</span>
+        <span class="value text-warning-bright">{{ promotions.filter(p => getStatus(p) === 'waiting').length }}</span>
       </div>
     </div>
 
@@ -29,11 +33,11 @@
     </div>
     
     <div v-else class="promo-grid">
-      <div v-for="km in promotions" :key="km.maKhuyenMai" class="promo-card glass-panel-heavy" :class="{ 'expired': !km.conHieuLuc }">
+      <div v-for="km in promotions" :key="km.maKhuyenMai" class="promo-card glass-panel-heavy" :class="getStatus(km)">
         <div class="promo-card-header">
           <div class="promo-category-badge" v-if="km.phanLoai">{{ km.phanLoai }}</div>
-          <div class="promo-badge" :class="km.conHieuLuc ? 'active' : 'expired'">
-            {{ km.conHieuLuc ? 'ĐANG CHẠY' : 'HẾT HẠN' }}
+          <div class="promo-badge" :class="getStatus(km)">
+            {{ getStatusText(km) }}
           </div>
           <div class="promo-actions">
             <button class="action-btn edit" @click="openForm(km)"><i class="fas fa-edit"></i></button>
@@ -261,6 +265,23 @@ const deletePromotion = async (id) => {
 
 const formatDate = (date) => new Date(date).toLocaleDateString('vi-VN');
 
+const getStatus = (km) => {
+  const now = new Date();
+  const start = new Date(km.ngayBatDau);
+  const end = new Date(km.ngayKetThuc);
+  
+  if (now < start) return 'waiting';
+  if (now > end) return 'expired';
+  return 'active';
+};
+
+const getStatusText = (km) => {
+  const status = getStatus(km);
+  if (status === 'waiting') return 'SẮP DIỄN RA';
+  if (status === 'expired') return 'HẾT HẠN';
+  return 'ĐANG CHẠY';
+};
+
 const copyCode = (code) => {
   navigator.clipboard.writeText(code);
   alert('Đã copy mã: ' + code);
@@ -307,6 +328,7 @@ onMounted(() => {
 .mini-stat .label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
 .mini-stat .value { font-size: 1.6rem; font-weight: 900; }
 .text-success-bright { color: #00e676; }
+.text-warning-bright { color: #e8882a; }
 
 .promo-grid {
   display: grid;
@@ -328,7 +350,8 @@ onMounted(() => {
   border-color: rgba(232, 136, 42, 0.3);
 }
 
-.promo-card.expired { opacity: 0.5; filter: grayscale(0.5); }
+.promo-card.expired { opacity: 0.5; filter: grayscale(0.6); }
+.promo-card.waiting { opacity: 0.8; border-color: rgba(232, 136, 42, 0.1); }
 
 .promo-card-header {
   display: flex;
@@ -342,6 +365,7 @@ onMounted(() => {
   border-radius: 50px; text-transform: uppercase;
 }
 .promo-badge.active { background: rgba(0,230,118,0.1); color: #00e676; }
+.promo-badge.waiting { background: rgba(232, 136, 42, 0.1); color: #e8882a; }
 .promo-badge.expired { background: rgba(255,51,102,0.1); color: #ff3366; }
 
 .promo-category-badge {
